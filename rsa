@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chiffrement RSA & Signature</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .section h3 {
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        .button-small {
+            padding: 6px 12px;
+            font-size: 14px;
+            margin-top: 5px;
+            margin-right: 5px;
+        }
+
+        .button-container {
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+
+        .button-secondary {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .button-secondary:hover {
+            box-shadow: 0 8px 20px rgba(17, 153, 142, 0.4);
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            resize: vertical;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea:disabled {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .alert.show {
+            opacity: 1;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .result-box {
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #c3e6cb;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            min-height: 50px;
+            word-wrap: break-word;
+        }
+
+        .result-box.invalid {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .hash-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #90caf9;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            word-wrap: break-word;
+            color: #0d47a1;
+            font-weight: 600;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .file-input {
+            margin-top: 10px;
+            padding: 10px;
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .file-input:hover {
+            background-color: #f0f0f0;
+        }
+
+        .file-input input[type="file"] {
+            display: none;
+        }
+
+        .file-input.active {
+            background-color: #e3f2fd;
+            border-color: #1976d2;
+        }
+
+        .info-badge {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+            font-weight: 600;
+        }
+
+        .clear-file-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            margin-left: 10px;
+        }
+
+        .clear-file-btn:hover {
+            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        .button-purple {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .button-purple:hover {
+            box-shadow: 0 8px 20px rgba(118, 75, 162, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Chiffrement RSA & Signature</h1>
+        <p class="subtitle">Générez des clés, chiffrez vos messages et signez vos documents de manière sécurisée</p>
+
+        <!-- Espace réservé pour les messages -->
+        <div id="alert" class="alert"></div>
+
+        <!-- Clés de chiffrement -->
+        <div class="section">
+            <h3>🔑 Clés de chiffrement <span class="info-badge">RSA-OAEP</span></h3>
+            
+            <button class="button" onclick="generateEncryptionKeys()">
+                Générer clés de chiffrement
+            </button>
+
+            <div class="input-group" style="margin-top: 20px;">
+                <label>Clé publique (chiffrement)</label>
+                <textarea id="encryptPublicKey" placeholder="Générez ou collez votre clé publique..."></textarea>
+                <div class="button-container">
+                    <button class="button button-small" id="copyEncryptPublic" onclick="copyToClipboard('encryptPublicKey')" style="visibility: hidden;">
+                        📋 Copier
+                    </button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Clé privée (déchiffrement)</label>
+                <textarea id="encryptPrivateKey" placeholder="Générez ou collez votre clé privée..."></textarea>
+                <div class="button-container">
+                    <button class="button button-small" id="copyEncryptPrivate" onclick="copyToClipboard('encryptPrivateKey')" style="visibility: hidden;">
+                        📋 Copier
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clés de signature -->
+        <div class="section">
+            <h3>🔑 Clés de signature <span class="info-badge">RSA-PSS</span></h3>
+            
+            <button class="button" onclick="generateSignatureKeys()">
+                Générer clés de signature
+            </button>
+
+            <div class="input-group" style="margin-top: 20px;">
+                <label>Clé publique (vérification)</label>
+                <textarea id="signPublicKey" placeholder="Générez ou collez votre clé publique..."></textarea>
+                <div class="button-container">
+                    <button class="button button-small" id="copySignPublic" onclick="copyToClipboard('signPublicKey')" style="visibility: hidden;">
+                        📋 Copier
+                    </button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Clé privée (signature)</label>
+                <textarea id="signPrivateKey" placeholder="Générez ou collez votre clé privée..."></textarea>
+                <div class="button-container">
+                    <button class="button button-small" id="copySignPrivate" onclick="copyToClipboard('signPrivateKey')" style="visibility: hidden;">
+                        📋 Copier
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="section">
+                <h3>🔒 Chiffrement</h3>
+                
+                <div class="input-group">
+                    <label>Texte à chiffrer</label>
+                    <textarea id="textToEncrypt" placeholder="Entrez le message à chiffrer..." style="min-height: 120px;"></textarea>
+                </div>
+
+                <button class="button" onclick="encryptMessage()">
+                    Chiffrer avec clé publique
+                </button>
+
+                <div id="encryptedResult" class="hidden" style="margin-top: 15px;">
+                    <label>Texte chiffré</label>
+                    <textarea id="encryptedText" readonly style="min-height: 120px; background-color: #f8f9fa;"></textarea>
+                    <div class="button-container">
+                        <button class="button button-small" onclick="copyToClipboard('encryptedText')">
+                            📋 Copier
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>🔓 Déchiffrement</h3>
+                
+                <div class="input-group">
+                    <label>Texte à déchiffrer</label>
+                    <textarea id="textToDecrypt" placeholder="Entrez le message chiffré..." style="min-height: 120px;"></textarea>
+                </div>
+
+                <button class="button" onclick="decryptMessage()">
+                    Déchiffrer avec clé privée
+                </button>
+
+                <div id="decryptedResult" class="hidden" style="margin-top: 15px;">
+                    <label>Texte déchiffré</label>
+                    <div id="decryptedText" class="result-box"></div>
+                    <div class="button-container">
+                        <button class="button button-small" onclick="copyDecrypted()">
+                            📋 Copier
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="section">
+                <h3>✍️ Signature</h3>
+                
+                <div class="input-group">
+                    <label>Texte à signer</label>
+                    <textarea id="textToSign" placeholder="Entrez le message à signer..." style="min-height: 100px;" oninput="onSignTextInput()"></textarea>
+                </div>
+
+                <div class="file-input" id="signFileInput" onclick="handleSignFileClick()">
+                    <input type="file" id="fileToSign" onchange="handleFileSign(this)">
+                    📁 Ou cliquez pour sélectionner un fichier à signer
+                </div>
+
+                <div id="signFileControls" class="hidden" style="margin-top: 10px;">
+                    <button class="button button-small clear-file-btn" onclick="clearSignFile()">
+                        🗑️ Annuler fichier
+                    </button>
+                </div>
+
+                <div id="preSignHash" class="hidden" style="margin-top: 10px;">
+                    <label>Hash SHA-256 du message <span class="info-badge">Calculé automatiquement</span></label>
+                    <div id="preSignHashOutput" class="hash-box" style="font-size: 11px; min-height: 30px;"></div>
+                </div>
+
+                <button class="button button-purple" style="margin-top: 15px;" onclick="signMessage()">
+                    Signer avec clé privée
+                </button>
+
+                <div id="signatureResult" class="hidden" style="margin-top: 15px;">
+                    <label>Signature</label>
+                    <textarea id="signatureText" readonly style="min-height: 100px; background-color: #f8f9fa;"></textarea>
+                    <div class="button-container">
+                        <button class="button button-small" onclick="copyToClipboard('signatureText')">
+                            📋 Copier
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>✅ Vérification de signature</h3>
+                
+                <div class="input-group">
+                    <label>Message original</label>
+                    <textarea id="messageToVerify" placeholder="Entrez le message original..." style="min-height: 60px;" oninput="onVerifyTextInput()"></textarea>
+                </div>
+
+                <div class="file-input" id="verifyFileInput" onclick="handleVerifyFileClick()">
+                    <input type="file" id="fileToVerify" onchange="handleFileVerify(this)">
+                    📁 Ou cliquez pour sélectionner le fichier original
+                </div>
+
+                <div id="verifyFileControls" class="hidden" style="margin-top: 10px;">
+                    <button class="button button-small clear-file-btn" onclick="clearVerifyFile()">
+                        🗑️ Annuler fichier
+                    </button>
+                </div>
+
+                <div class="input-group">
+                    <label>Signature à vérifier</label>
+                    <textarea id="signatureToVerify" placeholder="Collez la signature ici..." style="min-height: 80px;"></textarea>
+                </div>
+
+                <button class="button button-purple" onclick="verifySignature()">
+                    Vérifier la signature
+                </button>
+
+                <div id="verificationResult" class="hidden" style="margin-top: 15px;">
+                    <label>Résultat de la vérification</label>
+                    <div id="verificationText" class="result-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px; padding: 15px; background-color: #e3f2fd; border-radius: 8px; font-size: 14px;">
+            <strong>ℹ️ Info :</strong> Toutes les opérations sont effectuées localement dans votre navigateur. 
+            Aucune donnée n'est envoyée à un serveur.
+            <br><br>
+            <strong>📝 Note :</strong> 
+            Le <strong>chiffrement</strong> (RSA-OAEP) utilise la clé publique pour protéger la confidentialité. 
+            La <strong>signature</strong> (RSA-PSS) utilise la clé privée pour prouver l'authenticité. 
+            Les deux paires de clés sont <strong>séparées et indépendantes</strong>.
+            <br><br>
+            <strong>🔷 Hachage SHA-256 :</strong> Produit une empreinte unique de 256 bits. Même un petit changement dans le texte produit un hash complètement différent.
+            <br><br>
+            <strong>✅ Vérification de signature :</strong> Pour vérifier une signature, vous devez avoir le <strong>message original</strong> et la <strong>signature</strong>. La vérification confirme que le message n'a pas été modifié et provient bien du détenteur de la clé privée.
+        </div>
+    </div>
+
+    <script>
+        // Variables globales pour stocker les paires de clés
+        let encryptKeyPair = null;
+        let signKeyPair = null;
+
+        // Variables pour gérer les fichiers
+        let fileToSignData = null;
+        let fileToVerifyData = null;
+
+        function arrayBufferToBase64(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary);
+        }
+
+        function base64ToArrayBuffer(base64) {
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function arrayBufferToHex(buffer) {
+            return Array.from(new Uint8Array(buffer))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        }
+
+        function showMessage(text, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = text;
+            alert.className = `alert alert-${type} show`;
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 3000);
+        }
+
+        // Gestion des modes signature (texte vs fichier)
+        function updateSignMode() {
+            const textarea = document.getElementById('textToSign');
+            if (fileToSignData) {
+                textarea.disabled = true;
+                document.getElementById('signFileInput').classList.add('active');
+                document.getElementById('signFileControls').classList.remove('hidden');
+            } else {
+                textarea.disabled = false;
+                document.getElementById('signFileInput').classList.remove('active');
+                document.getElementById('signFileControls').classList.add('hidden');
+            }
+        }
+
+        function updateVerifyMode() {
+            const textarea = document.getElementById('messageToVerify');
+            if (fileToVerifyData) {
+                textarea.disabled = true;
+                document.getElementById('verifyFileInput').classList.add('active');
+                document.getElementById('verifyFileControls').classList.remove('hidden');
+            } else {
+                textarea.disabled = false;
+                document.getElementById('verifyFileInput').classList.remove('active');
+                document.getElementById('verifyFileControls').classList.add('hidden');
+            }
+        }
+
+        function onSignTextInput() {
+            const textValue = document.getElementById('textToSign').value;
+            if (textValue && fileToSignData) {
+                clearSignFile();
+            }
+            // Effacer le hash et la signature quand on change le texte
+            document.getElementById('preSignHash').classList.add('hidden');
+            document.getElementById('signatureResult').classList.add('hidden');
+        }
+
+        function onVerifyTextInput() {
+            const textValue = document.getElementById('messageToVerify').value;
+            if (textValue && fileToVerifyData) {
+                clearVerifyFile();
+            }
+            // Effacer le résultat de vérification quand on change le texte
+            document.getElementById('verificationResult').classList.add('hidden');
+        }
+
+        function handleSignFileClick() {
+            const textarea = document.getElementById('textToSign');
+            if (!textarea.disabled) {
+                document.getElementById('fileToSign').click();
+            }
+        }
+
+        function handleVerifyFileClick() {
+            const textarea = document.getElementById('messageToVerify');
+            if (!textarea.disabled) {
+                document.getElementById('fileToVerify').click();
+            }
+        }
+
+        function clearSignFile() {
+            fileToSignData = null;
+            document.getElementById('fileToSign').value = '';
+            document.getElementById('textToSign').value = '';
+            document.getElementById('preSignHash').classList.add('hidden');
+            document.getElementById('signatureResult').classList.add('hidden');
+            updateSignMode();
+        }
+
+        function clearVerifyFile() {
+            fileToVerifyData = null;
+            document.getElementById('fileToVerify').value = '';
+            document.getElementById('messageToVerify').value = '';
+            document.getElementById('verificationResult').classList.add('hidden');
+            updateVerifyMode();
+        }
+
+        async function handleFileSign(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                fileToSignData = new Uint8Array(arrayBuffer);
+                
+                document.getElementById('textToSign').value = `📄 Fichier sélectionné: ${file.name} (${file.size} octets)\nType: ${file.type || 'inconnu'}`;
+                document.getElementById('preSignHash').classList.add('hidden');
+                document.getElementById('signatureResult').classList.add('hidden');
+                
+                updateSignMode();
+                showMessage('📁 Fichier chargé - Cliquez sur "Signer" pour créer la signature', 'success');
+            } catch (err) {
+                showMessage('❌ Erreur de lecture du fichier : ' + err.message, 'error');
+                fileToSignData = null;
+                updateSignMode();
+            }
+        }
+
+        async function handleFileVerify(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                fileToVerifyData = new Uint8Array(arrayBuffer);
+                
+                document.getElementById('messageToVerify').value = `📄 Fichier sélectionné: ${file.name} (${file.size} octets)\nType: ${file.type || 'inconnu'}`;
+                document.getElementById('verificationResult').classList.add('hidden');
+                
+                updateVerifyMode();
+                showMessage('📁 Fichier chargé - Collez la signature et cliquez sur "Vérifier"', 'success');
+            } catch (err) {
+                showMessage('❌ Erreur de lecture du fichier : ' + err.message, 'error');
+                fileToVerifyData = null;
+                updateVerifyMode();
+            }
+        }
+
+        // Génération des clés de chiffrement (RSA-OAEP)
+        function generateEncryptionKeys() {
+            window.crypto.subtle.generateKey(
+                { 
+                    name: 'RSA-OAEP', 
+                    modulusLength: 2048, 
+                    publicExponent: new Uint8Array([1, 0, 1]), 
+                    hash: 'SHA-256' 
+                },
+                true,
+                ['encrypt', 'decrypt']
+            ).then(keyPair => {
+                encryptKeyPair = keyPair;
+                return Promise.all([
+                    window.crypto.subtle.exportKey('spki', keyPair.publicKey),
+                    window.crypto.subtle.exportKey('pkcs8', keyPair.privateKey)
+                ]);
+            }).then(([pub, priv]) => {
+                document.getElementById('encryptPublicKey').value = arrayBufferToBase64(pub);
+                document.getElementById('encryptPrivateKey').value = arrayBufferToBase64(priv);
+                document.getElementById('copyEncryptPublic').style.visibility = 'visible';
+                document.getElementById('copyEncryptPrivate').style.visibility = 'visible';
+                showMessage('✅ Clés de chiffrement générées !', 'success');
+            }).catch(err => {
+                showMessage('❌ Erreur : ' + err.message, 'error');
+            });
+        }
+
+        // Génération des clés de signature (RSA-PSS)
+        function generateSignatureKeys() {
+            window.crypto.subtle.generateKey(
+                {
+                    name: 'RSA-PSS',
+                    modulusLength: 2048,
+                    publicExponent: new Uint8Array([1, 0, 1]),
+                    hash: 'SHA-256'
+                },
+                true,
+                ['sign', 'verify']
+            ).then(keyPair => {
+                signKeyPair = keyPair;
+                return Promise.all([
+                    window.crypto.subtle.exportKey('spki', keyPair.publicKey),
+                    window.crypto.subtle.exportKey('pkcs8', keyPair.privateKey)
+                ]);
+            }).then(([pub, priv]) => {
+                document.getElementById('signPublicKey').value = arrayBufferToBase64(pub);
+                document.getElementById('signPrivateKey').value = arrayBufferToBase64(priv);
+                document.getElementById('copySignPublic').style.visibility = 'visible';
+                document.getElementById('copySignPrivate').style.visibility = 'visible';
+                showMessage('✅ Clés de signature générées !', 'success');
+            }).catch(err => {
+                showMessage('❌ Erreur : ' + err.message, 'error');
+            });
+        }
+
+        function encryptMessage() {
+            const publicKey = document.getElementById('encryptPublicKey').value;
+            const textToEncrypt = document.getElementById('textToEncrypt').value;
+
+            if (!publicKey || !textToEncrypt) {
+                showMessage('⚠️ Entrer une clé publique et un texte', 'warning');
+                return;
+            }
+            
+            window.crypto.subtle.importKey(
+                'spki', 
+                base64ToArrayBuffer(publicKey), 
+                { name: 'RSA-OAEP', hash: 'SHA-256' }, 
+                false, 
+                ['encrypt']
+            ).then(key => {
+                return window.crypto.subtle.encrypt(
+                    { name: 'RSA-OAEP' }, 
+                    key, 
+                    new TextEncoder().encode(textToEncrypt)
+                );
+            }).then(encrypted => {
+                document.getElementById('encryptedText').value = arrayBufferToBase64(encrypted);
+                document.getElementById('encryptedResult').classList.remove('hidden');
+                showMessage('✅ Message chiffré !', 'success');
+            }).catch(err => {
+                showMessage('❌ Erreur de chiffrement : ' + err.message, 'error');
+            });
+        }
+
+        function decryptMessage() {
+            const privateKey = document.getElementById('encryptPrivateKey').value;
+            const textToDecrypt = document.getElementById('textToDecrypt').value;
+
+            if (!privateKey || !textToDecrypt) {
+                showMessage('⚠️ Entrer une clé privée et un texte chiffré', 'warning');
+                return;
+            }
+            
+            window.crypto.subtle.importKey(
+                'pkcs8', 
+                base64ToArrayBuffer(privateKey), 
+                { name: 'RSA-OAEP', hash: 'SHA-256' }, 
+                false, 
+                ['decrypt']
+            ).then(key => {
+                return window.crypto.subtle.decrypt(
+                    { name: 'RSA-OAEP' }, 
+                    key, 
+                    base64ToArrayBuffer(textToDecrypt)
+                );
+            }).then(decrypted => {
+                document.getElementById('decryptedText').textContent = new TextDecoder().decode(decrypted);
+                document.getElementById('decryptedResult').classList.remove('hidden');
+                showMessage('✅ Message déchiffré !', 'success');
+            }).catch(err => {
+                showMessage('❌ Erreur de déchiffrement : ' + err.message, 'error');
+            });
+        }
+
+        async function signMessage() {
+            const privateKey = document.getElementById('signPrivateKey').value;
+            const textToSign = document.getElementById('textToSign').value;
+
+            if (!privateKey) {
+                showMessage('⚠️ Entrer une clé privée', 'warning');
+                return;
+            }
+
+            if (!textToSign && !fileToSignData) {
+                showMessage('⚠️ Entrer un texte ou sélectionner un fichier', 'warning');
+                return;
+            }
+
+            try {
+                let data;
+                
+                // Si un fichier a été chargé, l'utiliser, sinon utiliser le texte
+                if (fileToSignData) {
+                    data = fileToSignData;
+                } else {
+                    const encoder = new TextEncoder();
+                    data = encoder.encode(textToSign);
+                }
+                
+                // Calculer et afficher le hash du message
+                const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+                const hashHex = arrayBufferToHex(hashBuffer);
+                
+                document.getElementById('preSignHashOutput').textContent = hashHex;
+                document.getElementById('preSignHash').classList.remove('hidden');
+
+                // Importer la clé privée
+                const key = await window.crypto.subtle.importKey(
+                    'pkcs8',
+                    base64ToArrayBuffer(privateKey),
+                    {
+                        name: 'RSA-PSS',
+                        hash: 'SHA-256'
+                    },
+                    false,
+                    ['sign']
+                );
+
+                // Signer
+                const signature = await window.crypto.subtle.sign(
+                    {
+                        name: 'RSA-PSS',
+                        saltLength: 32
+                    },
+                    key,
+                    data
+                );
+
+                document.getElementById('signatureText').value = arrayBufferToBase64(signature);
+                document.getElementById('signatureResult').classList.remove('hidden');
+                
+                if (fileToSignData) {
+                    showMessage('✅ Fichier signé !', 'success');
+                } else {
+                    showMessage('✅ Message signé !', 'success');
+                }
+            } catch (err) {
+                showMessage('❌ Erreur de signature : ' + err.message, 'error');
+            }
+        }
+
+        async function verifySignature() {
+            const publicKey = document.getElementById('signPublicKey').value;
+            const signatureToVerify = document.getElementById('signatureToVerify').value;
+            const messageToVerify = document.getElementById('messageToVerify').value;
+
+            if (!publicKey || !signatureToVerify) {
+                showMessage('⚠️ Entrer une clé publique et une signature', 'warning');
+                return;
+            }
+
+            if (!messageToVerify && !fileToVerifyData) {
+                showMessage('⚠️ Entrer un message ou sélectionner un fichier', 'warning');
+                return;
+            }
+
+            try {
+                let data;
+                
+                // Si un fichier a été chargé, l'utiliser, sinon utiliser le texte
+                if (fileToVerifyData) {
+                    data = fileToVerifyData;
+                } else {
+                    const encoder = new TextEncoder();
+                    data = encoder.encode(messageToVerify);
+                }
+
+                // Import public key
+                const key = await window.crypto.subtle.importKey(
+                    'spki',
+                    base64ToArrayBuffer(publicKey),
+                    {
+                        name: 'RSA-PSS',
+                        hash: 'SHA-256'
+                    },
+                    false,
+                    ['verify']
+                );
+
+                // Verify the signature
+                const isValid = await window.crypto.subtle.verify(
+                    {
+                        name: 'RSA-PSS',
+                        saltLength: 32
+                    },
+                    key,
+                    base64ToArrayBuffer(signatureToVerify),
+                    data
+                );
+
+                const resultDiv = document.getElementById('verificationText');
+                const resultContainer = document.getElementById('verificationResult');
+                
+                if (isValid) {
+                    if (fileToVerifyData) {
+                        resultDiv.textContent = '✅ SIGNATURE VALIDE - Le fichier est authentique et n\'a pas été modifié. La signature correspond au fichier original.';
+                    } else {
+                        resultDiv.textContent = '✅ SIGNATURE VALIDE - Le message est authentique et n\'a pas été modifié. La signature correspond au message original.';
+                    }
+                    resultDiv.className = 'result-box';
+                    showMessage('✅ Signature valide !', 'success');
+                } else {
+                    if (fileToVerifyData) {
+                        resultDiv.textContent = '❌ SIGNATURE INVALIDE - Le fichier a été modifié ou la signature ne correspond pas au fichier original.';
+                    } else {
+                        resultDiv.textContent = '❌ SIGNATURE INVALIDE - Le message a été modifié ou la signature ne correspond pas au message original.';
+                    }
+                    resultDiv.className = 'result-box invalid';
+                    showMessage('❌ Signature invalide !', 'error');
+                }
+                
+                resultContainer.classList.remove('hidden');
+                
+            } catch (err) {
+                showMessage('❌ Erreur de vérification : ' + err.message, 'error');
+                const resultDiv = document.getElementById('verificationText');
+                resultDiv.textContent = '❌ Erreur lors de la vérification : ' + err.message;
+                resultDiv.className = 'result-box invalid';
+                document.getElementById('verificationResult').classList.remove('hidden');
+            }
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            navigator.clipboard.writeText(element.value);
+            showMessage('📋 Copié dans le presse-papier !', 'success');
+        }
+
+        function copyDecrypted() {
+            const text = document.getElementById('decryptedText').textContent;
+            navigator.clipboard.writeText(text);
+            showMessage('📋 Copié dans le presse-papier !', 'success');
+        }
+    </script>
+</body>
+</html>
