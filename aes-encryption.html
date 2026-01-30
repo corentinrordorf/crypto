@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chiffrement AES-256</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #f5576c;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .section h3 {
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        .button-small {
+            padding: 6px 12px;
+            font-size: 14px;
+            margin-top: 5px;
+            margin-right: 5px;
+        }
+
+        .button-container {
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            resize: vertical;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #f5576c;
+        }
+
+        textarea:disabled {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .alert.show {
+            opacity: 1;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            min-height: 50px;
+            word-wrap: break-word;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .file-input {
+            margin-top: 10px;
+            padding: 15px;
+            border: 2px dashed #f5576c;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .file-input:hover {
+            background-color: #f0f0f0;
+        }
+
+        .file-input input[type="file"] {
+            display: none;
+        }
+
+        .file-input.active {
+            background-color: #fff5f7;
+            border-color: #f5576c;
+        }
+
+        .clear-file-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .clear-file-btn:hover {
+            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        .info-badge {
+            display: inline-block;
+            background: #fff5f7;
+            color: #f5576c;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+            font-weight: 600;
+        }
+
+        .key-display {
+            background: #fff5f7;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #f093fb;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            word-wrap: break-word;
+            color: #c0392b;
+            font-weight: 600;
+        }
+
+        .info-box {
+            background: #fff5f7;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-top: 20px;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .download-btn:hover {
+            box-shadow: 0 8px 20px rgba(17, 153, 142, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 Chiffrement AES-256</h1>
+        <p class="subtitle">Chiffrez et déchiffrez vos fichiers et textes avec AES-256-GCM</p>
+
+        <!-- Espace réservé pour les messages -->
+        <div id="alert" class="alert"></div>
+
+        <!-- Section Génération de clé -->
+        <div class="section">
+            <h3>🔑 Clé de chiffrement <span class="info-badge">AES-256-GCM</span></h3>
+            
+            <button class="button" onclick="generateKey()">
+                Générer une nouvelle clé AES-256
+            </button>
+
+            <div class="input-group" style="margin-top: 20px;">
+                <label>Clé de chiffrement (Base64)</label>
+                <textarea id="encryptionKey" placeholder="Générez ou collez votre clé de chiffrement..."></textarea>
+                <div class="button-container">
+                    <button class="button button-small" id="copyKey" onclick="copyToClipboard('encryptionKey')" style="visibility: hidden;">
+                        📋 Copier la clé
+                    </button>
+                    <button class="button button-small download-btn" id="downloadKey" onclick="downloadKey()" style="visibility: hidden;">
+                        💾 Télécharger la clé
+                    </button>
+                </div>
+            </div>
+
+            <div class="info-box" style="font-size: 13px;">
+                <strong>⚠️ Important :</strong> Conservez cette clé en lieu sûr ! Sans elle, vous ne pourrez pas déchiffrer vos données. 
+                Ne partagez jamais votre clé de chiffrement.
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Section Chiffrement -->
+            <div class="section">
+                <h3>🔐 Chiffrement</h3>
+                
+                <div class="input-group">
+                    <label>Texte à chiffrer</label>
+                    <textarea id="textToEncrypt" placeholder="Entrez le texte à chiffrer..." style="min-height: 120px;" oninput="onEncryptTextInput()"></textarea>
+                </div>
+
+                <div class="file-input" id="encryptFileInput" onclick="handleEncryptFileClick()">
+                    <input type="file" id="fileToEncrypt" onchange="handleFileEncrypt(this)">
+                    📁 <strong>Ou cliquez pour sélectionner un fichier</strong>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        Tous types de fichiers acceptés
+                    </div>
+                </div>
+
+                <div id="encryptFileControls" class="hidden" style="margin-top: 10px;">
+                    <button class="button button-small clear-file-btn" onclick="clearEncryptFile()">
+                        🗑️ Annuler fichier
+                    </button>
+                </div>
+
+                <button class="button" style="margin-top: 15px; width: 100%;" onclick="encryptData()">
+                    🔒 Chiffrer
+                </button>
+
+                <div id="encryptedResult" class="hidden" style="margin-top: 15px;">
+                    <label>Données chiffrées</label>
+                    <textarea id="encryptedText" readonly style="min-height: 120px; background-color: #f8f9fa;"></textarea>
+                    <div class="button-container">
+                        <button class="button button-small" onclick="copyToClipboard('encryptedText')">
+                            📋 Copier
+                        </button>
+                        <button class="button button-small download-btn" id="downloadEncrypted" onclick="downloadEncrypted()" style="display: none;">
+                            💾 Télécharger
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Déchiffrement -->
+            <div class="section">
+                <h3>🔓 Déchiffrement</h3>
+                
+                <div class="input-group">
+                    <label>Texte à déchiffrer</label>
+                    <textarea id="textToDecrypt" placeholder="Collez le texte chiffré ici..." style="min-height: 120px;" oninput="onDecryptTextInput()"></textarea>
+                </div>
+
+                <div class="file-input" id="decryptFileInput" onclick="handleDecryptFileClick()">
+                    <input type="file" id="fileToDecrypt" onchange="handleFileDecrypt(this)">
+                    📁 <strong>Ou cliquez pour sélectionner un fichier chiffré</strong>
+                </div>
+
+                <div id="decryptFileControls" class="hidden" style="margin-top: 10px;">
+                    <button class="button button-small clear-file-btn" onclick="clearDecryptFile()">
+                        🗑️ Annuler fichier
+                    </button>
+                </div>
+
+                <button class="button" style="margin-top: 15px; width: 100%;" onclick="decryptData()">
+                    🔓 Déchiffrer
+                </button>
+
+                <div id="decryptedResult" class="hidden" style="margin-top: 15px;">
+                    <label>Données déchiffrées</label>
+                    <div id="decryptedText" class="result-box"></div>
+                    <div class="button-container">
+                        <button class="button button-small" onclick="copyDecrypted()">
+                            📋 Copier
+                        </button>
+                        <button class="button button-small download-btn" id="downloadDecrypted" onclick="downloadDecrypted()" style="display: none;">
+                            💾 Télécharger
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>ℹ️ À propos d'AES-256-GCM</strong>
+            <br><br>
+            <strong>AES (Advanced Encryption Standard)</strong> est l'algorithme de chiffrement symétrique le plus utilisé au monde. 
+            La variante <strong>AES-256-GCM</strong> utilise une clé de 256 bits et offre :
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li><strong>Confidentialité :</strong> Seul celui qui possède la clé peut déchiffrer</li>
+                <li><strong>Intégrité :</strong> GCM (Galois/Counter Mode) détecte toute modification des données</li>
+                <li><strong>Performance :</strong> Très rapide, même pour de gros fichiers</li>
+                <li><strong>Sécurité :</strong> Utilisé par les gouvernements et les banques</li>
+            </ul>
+            <br>
+            <strong>🛡️ Sécurité :</strong> Toutes les opérations sont effectuées localement dans votre navigateur. 
+            Aucune donnée n'est envoyée à un serveur.
+        </div>
+    </div>
+
+    <script>
+        let currentKey = null;
+        let fileToEncryptData = null;
+        let fileToDecryptData = null;
+        let encryptedFileName = null;
+        let decryptedFileName = null;
+
+        function arrayBufferToBase64(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary);
+        }
+
+        function base64ToArrayBuffer(base64) {
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function showMessage(text, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = text;
+            alert.className = `alert alert-${type} show`;
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 3000);
+        }
+
+        // Génération de clé AES-256
+        async function generateKey() {
+            try {
+                const key = await window.crypto.subtle.generateKey(
+                    {
+                        name: 'AES-GCM',
+                        length: 256
+                    },
+                    true,
+                    ['encrypt', 'decrypt']
+                );
+
+                currentKey = key;
+                const exportedKey = await window.crypto.subtle.exportKey('raw', key);
+                document.getElementById('encryptionKey').value = arrayBufferToBase64(exportedKey);
+                document.getElementById('copyKey').style.visibility = 'visible';
+                document.getElementById('downloadKey').style.visibility = 'visible';
+                showMessage('✅ Clé AES-256 générée avec succès !', 'success');
+            } catch (err) {
+                showMessage('❌ Erreur lors de la génération de la clé : ' + err.message, 'error');
+            }
+        }
+
+        async function importKey(keyBase64) {
+            try {
+                const keyData = base64ToArrayBuffer(keyBase64);
+                return await window.crypto.subtle.importKey(
+                    'raw',
+                    keyData,
+                    {
+                        name: 'AES-GCM',
+                        length: 256
+                    },
+                    false,
+                    ['encrypt', 'decrypt']
+                );
+            } catch (err) {
+                throw new Error('Clé invalide');
+            }
+        }
+
+        // Gestion mode chiffrement
+        function updateEncryptMode() {
+            const textarea = document.getElementById('textToEncrypt');
+            if (fileToEncryptData) {
+                textarea.disabled = true;
+                document.getElementById('encryptFileInput').classList.add('active');
+                document.getElementById('encryptFileControls').classList.remove('hidden');
+            } else {
+                textarea.disabled = false;
+                document.getElementById('encryptFileInput').classList.remove('active');
+                document.getElementById('encryptFileControls').classList.add('hidden');
+            }
+        }
+
+        function updateDecryptMode() {
+            const textarea = document.getElementById('textToDecrypt');
+            if (fileToDecryptData) {
+                textarea.disabled = true;
+                document.getElementById('decryptFileInput').classList.add('active');
+                document.getElementById('decryptFileControls').classList.remove('hidden');
+            } else {
+                textarea.disabled = false;
+                document.getElementById('decryptFileInput').classList.remove('active');
+                document.getElementById('decryptFileControls').classList.add('hidden');
+            }
+        }
+
+        function onEncryptTextInput() {
+            const textValue = document.getElementById('textToEncrypt').value;
+            if (textValue && fileToEncryptData) {
+                clearEncryptFile();
+            }
+            document.getElementById('encryptedResult').classList.add('hidden');
+        }
+
+        function onDecryptTextInput() {
+            const textValue = document.getElementById('textToDecrypt').value;
+            if (textValue && fileToDecryptData) {
+                clearDecryptFile();
+            }
+            document.getElementById('decryptedResult').classList.add('hidden');
+        }
+
+        function handleEncryptFileClick() {
+            const textarea = document.getElementById('textToEncrypt');
+            if (!textarea.disabled) {
+                document.getElementById('fileToEncrypt').click();
+            }
+        }
+
+        function handleDecryptFileClick() {
+            const textarea = document.getElementById('textToDecrypt');
+            if (!textarea.disabled) {
+                document.getElementById('fileToDecrypt').click();
+            }
+        }
+
+        function clearEncryptFile() {
+            fileToEncryptData = null;
+            encryptedFileName = null;
+            document.getElementById('fileToEncrypt').value = '';
+            document.getElementById('textToEncrypt').value = '';
+            document.getElementById('encryptedResult').classList.add('hidden');
+            updateEncryptMode();
+        }
+
+        function clearDecryptFile() {
+            fileToDecryptData = null;
+            decryptedFileName = null;
+            document.getElementById('fileToDecrypt').value = '';
+            document.getElementById('textToDecrypt').value = '';
+            document.getElementById('decryptedResult').classList.add('hidden');
+            updateDecryptMode();
+        }
+
+        async function handleFileEncrypt(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                fileToEncryptData = new Uint8Array(arrayBuffer);
+                encryptedFileName = file.name + '.encrypted';
+                
+                document.getElementById('textToEncrypt').value = `📄 Fichier sélectionné: ${file.name}\nTaille: ${formatFileSize(file.size)}\nType: ${file.type || 'inconnu'}`;
+                document.getElementById('encryptedResult').classList.add('hidden');
+                
+                updateEncryptMode();
+                showMessage('📁 Fichier chargé - Cliquez sur "Chiffrer"', 'success');
+            } catch (err) {
+                showMessage('❌ Erreur de lecture du fichier : ' + err.message, 'error');
+                fileToEncryptData = null;
+                updateEncryptMode();
+            }
+        }
+
+        async function handleFileDecrypt(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                fileToDecryptData = new Uint8Array(arrayBuffer);
+                decryptedFileName = file.name.replace('.encrypted', '');
+                
+                document.getElementById('textToDecrypt').value = `📄 Fichier sélectionné: ${file.name}\nTaille: ${formatFileSize(file.size)}`;
+                document.getElementById('decryptedResult').classList.add('hidden');
+                
+                updateDecryptMode();
+                showMessage('📁 Fichier chargé - Cliquez sur "Déchiffrer"', 'success');
+            } catch (err) {
+                showMessage('❌ Erreur de lecture du fichier : ' + err.message, 'error');
+                fileToDecryptData = null;
+                updateDecryptMode();
+            }
+        }
+
+        async function encryptData() {
+            const keyBase64 = document.getElementById('encryptionKey').value;
+            
+            if (!keyBase64) {
+                showMessage('⚠️ Générez ou entrez une clé de chiffrement', 'warning');
+                return;
+            }
+
+            let data;
+            const isFile = fileToEncryptData !== null;
+
+            if (isFile) {
+                data = fileToEncryptData;
+            } else {
+                const text = document.getElementById('textToEncrypt').value;
+                if (!text) {
+                    showMessage('⚠️ Entrez un texte ou sélectionnez un fichier', 'warning');
+                    return;
+                }
+                data = new TextEncoder().encode(text);
+            }
+
+            try {
+                const key = await importKey(keyBase64);
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                
+                const encryptedData = await window.crypto.subtle.encrypt(
+                    {
+                        name: 'AES-GCM',
+                        iv: iv
+                    },
+                    key,
+                    data
+                );
+
+                // Combiner IV + données chiffrées
+                const combined = new Uint8Array(iv.length + encryptedData.byteLength);
+                combined.set(iv, 0);
+                combined.set(new Uint8Array(encryptedData), iv.length);
+
+                document.getElementById('encryptedText').value = arrayBufferToBase64(combined);
+                document.getElementById('encryptedResult').classList.remove('hidden');
+                
+                if (isFile) {
+                    document.getElementById('downloadEncrypted').style.display = 'inline-flex';
+                    showMessage('✅ Fichier chiffré !', 'success');
+                } else {
+                    document.getElementById('downloadEncrypted').style.display = 'none';
+                    showMessage('✅ Texte chiffré !', 'success');
+                }
+            } catch (err) {
+                showMessage('❌ Erreur de chiffrement : ' + err.message, 'error');
+            }
+        }
+
+        async function decryptData() {
+            const keyBase64 = document.getElementById('encryptionKey').value;
+            
+            if (!keyBase64) {
+                showMessage('⚠️ Entrez la clé de chiffrement', 'warning');
+                return;
+            }
+
+            let encryptedData;
+            const isFile = fileToDecryptData !== null;
+
+            if (isFile) {
+                encryptedData = fileToDecryptData;
+            } else {
+                const text = document.getElementById('textToDecrypt').value;
+                if (!text) {
+                    showMessage('⚠️ Entrez les données chiffrées ou sélectionnez un fichier', 'warning');
+                    return;
+                }
+                encryptedData = new Uint8Array(base64ToArrayBuffer(text));
+            }
+
+            try {
+                const key = await importKey(keyBase64);
+                
+                // Extraire IV et données
+                const iv = encryptedData.slice(0, 12);
+                const data = encryptedData.slice(12);
+
+                const decryptedData = await window.crypto.subtle.decrypt(
+                    {
+                        name: 'AES-GCM',
+                        iv: iv
+                    },
+                    key,
+                    data
+                );
+
+                if (isFile) {
+                    // Stocker pour téléchargement
+                    window.decryptedFileData = new Uint8Array(decryptedData);
+                    document.getElementById('decryptedText').textContent = `✅ Fichier déchiffré avec succès !\nNom: ${decryptedFileName}\nTaille: ${formatFileSize(decryptedData.byteLength)}`;
+                    document.getElementById('downloadDecrypted').style.display = 'inline-flex';
+                    showMessage('✅ Fichier déchiffré !', 'success');
+                } else {
+                    const decryptedText = new TextDecoder().decode(decryptedData);
+                    document.getElementById('decryptedText').textContent = decryptedText;
+                    document.getElementById('downloadDecrypted').style.display = 'none';
+                    showMessage('✅ Texte déchiffré !', 'success');
+                }
+                
+                document.getElementById('decryptedResult').classList.remove('hidden');
+            } catch (err) {
+                showMessage('❌ Erreur de déchiffrement : clé incorrecte ou données corrompues', 'error');
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' octets';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+            return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            navigator.clipboard.writeText(element.value);
+            showMessage('📋 Copié dans le presse-papier !', 'success');
+        }
+
+        function copyDecrypted() {
+            const text = document.getElementById('decryptedText').textContent;
+            navigator.clipboard.writeText(text);
+            showMessage('📋 Copié dans le presse-papier !', 'success');
+        }
+
+        function downloadKey() {
+            const key = document.getElementById('encryptionKey').value;
+            const blob = new Blob([key], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'aes-key.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+            showMessage('💾 Clé téléchargée !', 'success');
+        }
+
+        function downloadEncrypted() {
+            const encrypted = document.getElementById('encryptedText').value;
+            const blob = new Blob([encrypted], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = encryptedFileName || 'encrypted.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+            showMessage('💾 Fichier téléchargé !', 'success');
+        }
+
+        function downloadDecrypted() {
+            if (!window.decryptedFileData) return;
+            
+            const blob = new Blob([window.decryptedFileData], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = decryptedFileName || 'decrypted';
+            a.click();
+            URL.revokeObjectURL(url);
+            showMessage('💾 Fichier téléchargé !', 'success');
+        }
+    </script>
+</body>
+</html>
