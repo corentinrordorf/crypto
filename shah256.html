@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hachage SHA-256</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #11998e;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .section h3 {
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(17, 153, 142, 0.4);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        .button-small {
+            padding: 6px 12px;
+            font-size: 14px;
+            margin-top: 5px;
+            margin-right: 5px;
+        }
+
+        .button-container {
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            resize: vertical;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #11998e;
+        }
+
+        textarea:disabled {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .alert.show {
+            opacity: 1;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .hash-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #90caf9;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            word-wrap: break-word;
+            color: #0d47a1;
+            font-weight: 600;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .file-input {
+            margin-top: 10px;
+            padding: 15px;
+            border: 2px dashed #11998e;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .file-input:hover {
+            background-color: #f0f0f0;
+        }
+
+        .file-input input[type="file"] {
+            display: none;
+        }
+
+        .file-input.active {
+            background-color: #e3f2fd;
+            border-color: #11998e;
+        }
+
+        .clear-file-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .clear-file-btn:hover {
+            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-top: 20px;
+        }
+
+        .file-info {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔷 Hachage SHA-256</h1>
+        <p class="subtitle">Calculez l'empreinte cryptographique de vos textes et fichiers</p>
+
+        <!-- Espace réservé pour les messages -->
+        <div id="alert" class="alert"></div>
+
+        <!-- Section Hachage SHA-256 -->
+        <div class="section">
+            <h3>Calculer un hash SHA-256</h3>
+            
+            <div class="input-group">
+                <label>Texte à hacher</label>
+                <textarea id="textToHash" placeholder="Entrez le texte à hacher...
+
+Exemple : votre message, votre mot de passe, n'importe quel texte..." oninput="onHashTextInput()"></textarea>
+            </div>
+
+            <div class="file-input" id="hashFileInput" onclick="handleFileClick()">
+                <input type="file" id="fileToHash" onchange="handleFileHash(this)">
+                📁 <strong>Ou cliquez pour sélectionner un fichier</strong>
+                <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                    Tous types de fichiers acceptés (documents, images, vidéos, etc.)
+                </div>
+            </div>
+
+            <div id="hashFileControls" class="hidden" style="margin-top: 10px;">
+                <button class="button button-small clear-file-btn" onclick="clearHashFile()">
+                    🗑️ Annuler fichier
+                </button>
+            </div>
+
+            <button class="button" style="margin-top: 15px; width: 100%;" onclick="hashText()">
+                🔷 Calculer le hash SHA-256
+            </button>
+
+            <div id="hashResult" class="hidden" style="margin-top: 20px;">
+                <label>Hash SHA-256 (256 bits / 64 caractères hexadécimaux)</label>
+                <div id="hashOutput" class="hash-box"></div>
+                <div class="button-container">
+                    <button class="button button-small" onclick="copyHash()">
+                        📋 Copier le hash
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>ℹ️ Qu'est-ce que SHA-256 ?</strong>
+            <br><br>
+            SHA-256 (Secure Hash Algorithm 256 bits) est une fonction de hachage cryptographique qui transforme n'importe quelle donnée en une empreinte unique de 256 bits (64 caractères hexadécimaux).
+            <br><br>
+            <strong>📌 Propriétés importantes :</strong>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li><strong>Déterministe :</strong> Le même texte produit toujours le même hash</li>
+                <li><strong>Unique :</strong> Il est pratiquement impossible que deux textes différents aient le même hash</li>
+                <li><strong>Irréversible :</strong> On ne peut pas retrouver le texte original à partir du hash</li>
+                <li><strong>Sensible :</strong> Changer un seul caractère change complètement le hash</li>
+            </ul>
+            <br>
+            <strong>🔒 Utilisations courantes :</strong>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>Vérifier l'intégrité de fichiers téléchargés</li>
+                <li>Stocker des mots de passe de manière sécurisée</li>
+                <li>Créer des signatures numériques</li>
+                <li>Blockchain et cryptomonnaies</li>
+            </ul>
+            <br>
+            <strong>🛡️ Sécurité :</strong> Toutes les opérations sont effectuées localement dans votre navigateur. Aucune donnée n'est envoyée à un serveur.
+        </div>
+    </div>
+
+    <script>
+        let fileToHashData = null;
+
+        function arrayBufferToHex(buffer) {
+            return Array.from(new Uint8Array(buffer))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        }
+
+        function showMessage(text, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = text;
+            alert.className = `alert alert-${type} show`;
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 3000);
+        }
+
+        function updateHashMode() {
+            const textarea = document.getElementById('textToHash');
+            if (fileToHashData) {
+                textarea.disabled = true;
+                document.getElementById('hashFileInput').classList.add('active');
+                document.getElementById('hashFileControls').classList.remove('hidden');
+            } else {
+                textarea.disabled = false;
+                document.getElementById('hashFileInput').classList.remove('active');
+                document.getElementById('hashFileControls').classList.add('hidden');
+            }
+        }
+
+        function onHashTextInput() {
+            const textValue = document.getElementById('textToHash').value;
+            if (textValue && fileToHashData) {
+                clearHashFile();
+            }
+            // Effacer le résultat quand on change le texte
+            document.getElementById('hashResult').classList.add('hidden');
+        }
+
+        function handleFileClick() {
+            const textarea = document.getElementById('textToHash');
+            if (!textarea.disabled) {
+                document.getElementById('fileToHash').click();
+            }
+        }
+
+        function clearHashFile() {
+            fileToHashData = null;
+            document.getElementById('fileToHash').value = '';
+            document.getElementById('textToHash').value = '';
+            document.getElementById('hashResult').classList.add('hidden');
+            updateHashMode();
+        }
+
+        async function hashText() {
+            let data;
+            
+            if (fileToHashData) {
+                data = fileToHashData;
+            } else {
+                const text = document.getElementById('textToHash').value;
+                if (!text) {
+                    showMessage('⚠️ Entrez du texte à hacher', 'warning');
+                    return;
+                }
+                const encoder = new TextEncoder();
+                data = encoder.encode(text);
+            }
+
+            try {
+                const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+                const hashHex = arrayBufferToHex(hashBuffer);
+                
+                document.getElementById('hashOutput').textContent = hashHex;
+                document.getElementById('hashResult').classList.remove('hidden');
+                
+                if (fileToHashData) {
+                    showMessage('✅ Hash du fichier calculé !', 'success');
+                } else {
+                    showMessage('✅ Hash calculé !', 'success');
+                }
+            } catch (err) {
+                showMessage('❌ Erreur : ' + err.message, 'error');
+            }
+        }
+
+        async function handleFileHash(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                fileToHashData = new Uint8Array(arrayBuffer);
+                
+                document.getElementById('textToHash').value = `📄 Fichier sélectionné: ${file.name}\nTaille: ${formatFileSize(file.size)}\nType: ${file.type || 'inconnu'}`;
+                document.getElementById('hashResult').classList.add('hidden');
+                
+                updateHashMode();
+                showMessage('📁 Fichier chargé - Cliquez sur "Calculer" pour obtenir le hash', 'success');
+            } catch (err) {
+                showMessage('❌ Erreur de lecture du fichier : ' + err.message, 'error');
+                fileToHashData = null;
+                updateHashMode();
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' octets';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+            return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+        }
+
+        function copyHash() {
+            const hash = document.getElementById('hashOutput').textContent;
+            navigator.clipboard.writeText(hash);
+            showMessage('📋 Hash copié dans le presse-papier !', 'success');
+        }
+    </script>
+</body>
+</html>
