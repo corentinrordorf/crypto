@@ -482,28 +482,18 @@
         let fileToSignData = null;
         let fileToVerifyData = null;
 
-        function arrayBufferToBase64(buffer) {
-            let binary = '';
-            const bytes = new Uint8Array(buffer);
-            for (let i = 0; i < bytes.byteLength; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
-            return btoa(binary);
-        }
-
-        function base64ToArrayBuffer(base64) {
-            const binary = atob(base64);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
-            }
-            return bytes.buffer;
-        }
-
         function arrayBufferToHex(buffer) {
             return Array.from(new Uint8Array(buffer))
                 .map(b => b.toString(16).padStart(2, '0'))
                 .join('');
+        }
+
+        function hexToArrayBuffer(hex) {
+            const bytes = new Uint8Array(hex.length / 2);
+            for (let i = 0; i < hex.length; i += 2) {
+                bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+            }
+            return bytes.buffer;
         }
 
         function showMessage(text, type) {
@@ -651,8 +641,8 @@
                     window.crypto.subtle.exportKey('pkcs8', keyPair.privateKey)
                 ]);
             }).then(([pub, priv]) => {
-                document.getElementById('encryptPublicKey').value = arrayBufferToBase64(pub);
-                document.getElementById('encryptPrivateKey').value = arrayBufferToBase64(priv);
+                document.getElementById('encryptPublicKey').value = arrayBufferToHex(pub);
+                document.getElementById('encryptPrivateKey').value = arrayBufferToHex(priv);
                 document.getElementById('copyEncryptPublic').style.visibility = 'visible';
                 document.getElementById('copyEncryptPrivate').style.visibility = 'visible';
                 showMessage('✅ Clés de chiffrement générées !', 'success');
@@ -679,8 +669,8 @@
                     window.crypto.subtle.exportKey('pkcs8', keyPair.privateKey)
                 ]);
             }).then(([pub, priv]) => {
-                document.getElementById('signPublicKey').value = arrayBufferToBase64(pub);
-                document.getElementById('signPrivateKey').value = arrayBufferToBase64(priv);
+                document.getElementById('signPublicKey').value = arrayBufferToHex(pub);
+                document.getElementById('signPrivateKey').value = arrayBufferToHex(priv);
                 document.getElementById('copySignPublic').style.visibility = 'visible';
                 document.getElementById('copySignPrivate').style.visibility = 'visible';
                 showMessage('✅ Clés de signature générées !', 'success');
@@ -700,7 +690,7 @@
             
             window.crypto.subtle.importKey(
                 'spki', 
-                base64ToArrayBuffer(publicKey), 
+                hexToArrayBuffer(publicKey), 
                 { name: 'RSA-OAEP', hash: 'SHA-256' }, 
                 false, 
                 ['encrypt']
@@ -711,7 +701,7 @@
                     new TextEncoder().encode(textToEncrypt)
                 );
             }).then(encrypted => {
-                document.getElementById('encryptedText').value = arrayBufferToBase64(encrypted);
+                document.getElementById('encryptedText').value = arrayBufferToHex(encrypted);
                 document.getElementById('encryptedResult').classList.remove('hidden');
                 showMessage('✅ Message chiffré !', 'success');
             }).catch(err => {
@@ -730,7 +720,7 @@
             
             window.crypto.subtle.importKey(
                 'pkcs8', 
-                base64ToArrayBuffer(privateKey), 
+                hexToArrayBuffer(privateKey), 
                 { name: 'RSA-OAEP', hash: 'SHA-256' }, 
                 false, 
                 ['decrypt']
@@ -738,7 +728,7 @@
                 return window.crypto.subtle.decrypt(
                     { name: 'RSA-OAEP' }, 
                     key, 
-                    base64ToArrayBuffer(textToDecrypt)
+                    hexToArrayBuffer(textToDecrypt)
                 );
             }).then(decrypted => {
                 document.getElementById('decryptedText').textContent = new TextDecoder().decode(decrypted);
@@ -784,7 +774,7 @@
                 // Importer la clé privée
                 const key = await window.crypto.subtle.importKey(
                     'pkcs8',
-                    base64ToArrayBuffer(privateKey),
+                    hexToArrayBuffer(privateKey),
                     {
                         name: 'RSA-PSS',
                         hash: 'SHA-256'
@@ -803,7 +793,7 @@
                     data
                 );
 
-                document.getElementById('signatureText').value = arrayBufferToBase64(signature);
+                document.getElementById('signatureText').value = arrayBufferToHex(signature);
                 document.getElementById('signatureResult').classList.remove('hidden');
                 
                 if (fileToSignData) {
@@ -845,7 +835,7 @@
                 // Import public key
                 const key = await window.crypto.subtle.importKey(
                     'spki',
-                    base64ToArrayBuffer(publicKey),
+                    hexToArrayBuffer(publicKey),
                     {
                         name: 'RSA-PSS',
                         hash: 'SHA-256'
@@ -861,7 +851,7 @@
                         saltLength: 32
                     },
                     key,
-                    base64ToArrayBuffer(signatureToVerify),
+                    hexToArrayBuffer(signatureToVerify),
                     data
                 );
 
