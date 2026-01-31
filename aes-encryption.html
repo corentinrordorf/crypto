@@ -283,7 +283,7 @@
             </button>
 
             <div class="input-group" style="margin-top: 20px;">
-                <label>Clé de chiffrement (Base64)</label>
+                <label>Clé de chiffrement (Hexadécimal - 64 caractères)</label>
                 <textarea id="encryptionKey" placeholder="Générez ou collez votre clé de chiffrement..."></textarea>
                 <div class="button-container">
                     <button class="button button-small" id="copyKey" onclick="copyToClipboard('encryptionKey')" style="visibility: hidden;">
@@ -406,20 +406,16 @@
         let encryptedFileName = null;
         let decryptedFileName = null;
 
-        function arrayBufferToBase64(buffer) {
-            let binary = '';
-            const bytes = new Uint8Array(buffer);
-            for (let i = 0; i < bytes.byteLength; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
-            return btoa(binary);
+        function arrayBufferToHex(buffer) {
+            return Array.from(new Uint8Array(buffer))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
         }
 
-        function base64ToArrayBuffer(base64) {
-            const binary = atob(base64);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
+        function hexToArrayBuffer(hex) {
+            const bytes = new Uint8Array(hex.length / 2);
+            for (let i = 0; i < hex.length; i += 2) {
+                bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
             }
             return bytes.buffer;
         }
@@ -447,7 +443,7 @@
 
                 currentKey = key;
                 const exportedKey = await window.crypto.subtle.exportKey('raw', key);
-                document.getElementById('encryptionKey').value = arrayBufferToBase64(exportedKey);
+                document.getElementById('encryptionKey').value = arrayBufferToHex(exportedKey);
                 document.getElementById('copyKey').style.visibility = 'visible';
                 document.getElementById('downloadKey').style.visibility = 'visible';
                 showMessage('✅ Clé AES-256 générée avec succès !', 'success');
@@ -456,9 +452,9 @@
             }
         }
 
-        async function importKey(keyBase64) {
+        async function importKey(keyHex) {
             try {
-                const keyData = base64ToArrayBuffer(keyBase64);
+                const keyData = hexToArrayBuffer(keyHex);
                 return await window.crypto.subtle.importKey(
                     'raw',
                     keyData,
@@ -576,8 +572,21 @@
 
             try {
                 const arrayBuffer = await file.arrayBuffer();
-                fileToDecryptData = new Uint8Array(arrayBuffer);
-                decryptedFileName = file.name.replace('.encrypted', '');
+                
+                // Vérifier si c'est un fichier binaire ou du texte hexadécimal
+                const firstBytes = new Uint8Array(arrayBuffer.slice(0, 100));
+                const isHex = isLikelyHex(firstBytes);
+                
+                if (isHex) {
+                    // Fichier texte contenant de l'hexadécimal
+                    const text = new TextDecoder().decode(arrayBuffer);
+                    fileToDecryptData = new Uint8Array(hexToArrayBuffer(text.trim()));
+                } else {
+                    // Fichier binaire
+                    fileToDecryptData = new Uint8Array(arrayBuffer);
+                }
+                
+                decryptedFileName = file.name.replace('.encrypted', '').replace('.bin', '');
                 
                 document.getElementById('textToDecrypt').value = `📄 Fichier sélectionné: ${file.name}\nTaille: ${formatFileSize(file.size)}`;
                 document.getElementById('decryptedResult').classList.add('hidden');
@@ -591,10 +600,24 @@
             }
         }
 
+        function isLikelyHex(bytes) {
+            // Vérifier si les premiers octets ressemblent à de l'hexadécimal
+            // Hex utilise seulement 0-9, a-f, A-F
+            for (let i = 0; i < Math.min(bytes.length, 100); i++) {
+                const char = bytes[i];
+                const isHexChar = (char >= 48 && char <= 57) ||  // 0-9
+                                 (char >= 65 && char <= 70) ||  // A-F
+                                 (char >= 97 && char <= 102) || // a-f
+                                 char === 10 || char === 13;    // \n \r
+                if (!isHexChar) return false;
+            }
+            return true;
+        }
+
         async function encryptData() {
-            const keyBase64 = document.getElementById('encryptionKey').value;
+            const keyHex = document.getElementById('encryptionKey').value;
             
-            if (!keyBase64) {
+            if (!keyHex) {
                 showMessage('⚠️ Générez ou entrez une clé de chiffrement', 'warning');
                 return;
             }
@@ -614,7 +637,7 @@
             }
 
             try {
-                const key = await importKey(keyBase64);
+                const key = await importKey(keyHex);
                 const iv = window.crypto.getRandomValues(new Uint8Array(12));
                 
                 const encryptedData = await window.crypto.subtle.encrypt(
@@ -631,7 +654,7 @@
                 combined.set(iv, 0);
                 combined.set(new Uint8Array(encryptedData), iv.length);
 
-                document.getElementById('encryptedText').value = arrayBufferToBase64(combined);
+                document.getElementById('encryptedText').value = arrayBufferToHex(combined);
                 document.getElementById('encryptedResult').classList.remove('hidden');
                 
                 if (isFile) {
@@ -647,9 +670,9 @@
         }
 
         async function decryptData() {
-            const keyBase64 = document.getElementById('encryptionKey').value;
+            const keyHex = document.getElementById('encryptionKey').value;
             
-            if (!keyBase64) {
+            if (!keyHex) {
                 showMessage('⚠️ Entrez la clé de chiffrement', 'warning');
                 return;
             }
@@ -665,11 +688,11 @@
                     showMessage('⚠️ Entrez les données chiffrées ou sélectionnez un fichier', 'warning');
                     return;
                 }
-                encryptedData = new Uint8Array(base64ToArrayBuffer(text));
+                encryptedData = new Uint8Array(hexToArrayBuffer(text));
             }
 
             try {
-                const key = await importKey(keyBase64);
+                const key = await importKey(keyHex);
                 
                 // Extraire IV et données
                 const iv = encryptedData.slice(0, 12);
@@ -735,12 +758,13 @@
         }
 
         function downloadEncrypted() {
-            const encrypted = document.getElementById('encryptedText').value;
-            const blob = new Blob([encrypted], { type: 'application/octet-stream' });
+            const encryptedHex = document.getElementById('encryptedText').value;
+            const encryptedData = hexToArrayBuffer(encryptedHex);
+            const blob = new Blob([encryptedData], { type: 'application/octet-stream' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = encryptedFileName || 'encrypted.txt';
+            a.download = encryptedFileName || 'encrypted.bin';
             a.click();
             URL.revokeObjectURL(url);
             showMessage('💾 Fichier téléchargé !', 'success');
