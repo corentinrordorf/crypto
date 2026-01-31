@@ -286,10 +286,12 @@ Exemple : votre message, votre mot de passe, n'importe quel texte..." oninput="o
             <br><br>
             <strong>📌 Propriétés importantes :</strong>
             <ul style="margin-left: 20px; margin-top: 10px;">
-                <li><strong>Déterministe :</strong> Le même texte produit toujours le même hash</li>
-                <li><strong>Unique :</strong> Il est pratiquement impossible que deux textes différents aient le même hash</li>
-                <li><strong>Irréversible :</strong> On ne peut pas retrouver le texte original à partir du hash</li>
-                <li><strong>Sensible :</strong> Changer un seul caractère change complètement le hash</li>
+            <li><strong>Déterministe :</strong> le même message produit toujours le même hash</li>
+            <li><strong>Résistant aux collisions :</strong> il est pratiquement impossible de trouver deux messages différents avec le même hash</li>
+            <li><strong>Résistant à la préimage :</strong> il est impossible de retrouver le message original à partir du hash</li>
+            <li><strong>Résistant à la seconde préimage :</strong> difficile de trouver un autre message ayant le même hash qu’un message donné</li>
+            <li><strong>Effet avalanche :</strong> une modification minime change complètement le hash</li>
+
             </ul>
             <br>
             <strong>🔒 Utilisations courantes :</strong>
