@@ -463,9 +463,13 @@
             Aucune donnée n'est envoyée à un serveur.
             <br><br>
             <strong>📝 Note :</strong> 
-            Le <strong>chiffrement</strong> (RSA-OAEP) utilise la clé publique pour protéger la confidentialité. 
-            La <strong>signature</strong> (RSA-PSS) utilise la clé privée pour prouver l'authenticité. 
-            Les deux paires de clés sont <strong>séparées et indépendantes</strong>.
+            Le chiffrement (<strong>RSA-OAEP</strong>) sert à protéger la confidentialité :
+            le message est chiffré avec la <strong>clé publique du destinataire</strong> et ne peut être déchiffré
+            qu’avec sa clé privée.  
+            La signature (<strong>RSA-PSS</strong>) sert à prouver l’authenticité :
+            Le message est signé avec la <strong>clé privée de l’expéditeur</strong> et peut être vérifié
+            avec sa clé publique.  
+            Les clés utilisées pour le chiffrement et pour la signature sont distinctes et indépendantes.</p> 
             <br><br>
             <strong>🔷 Hachage SHA-256 :</strong> Produit une empreinte unique de 256 bits. Même un petit changement dans le texte produit un hash complètement différent.
             <br><br>
