@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Échange de clés Diffie-Hellman</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #4facfe;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .section h3 {
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        .button-small {
+            padding: 6px 12px;
+            font-size: 14px;
+            margin-top: 5px;
+            margin-right: 5px;
+        }
+
+        .button-container {
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .alert.show {
+            opacity: 1;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .info-badge {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+            font-weight: 600;
+        }
+
+        .key-display {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #90caf9;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            word-wrap: break-word;
+            word-break: break-all;
+            color: #0d47a1;
+            font-weight: 600;
+            min-height: 50px;
+            max-height: 120px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-top: 20px;
+        }
+
+        .user-card {
+            border: 2px solid #4facfe;
+        }
+
+        .user-card h3 {
+            color: #4facfe;
+        }
+
+        .shared-section {
+            background: #fff9e6;
+            border: 2px solid #ffc107;
+        }
+
+        .shared-section h3 {
+            color: #f57c00;
+        }
+
+        .steps {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .step {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #4facfe;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .step-number {
+            font-weight: bold;
+            color: #4facfe;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Échange de clés Diffie-Hellman</h1>
+        <p class="subtitle">Établissez une clé secrète partagée sans jamais l'échanger directement !</p>
+
+        <!-- Espace réservé pour les messages -->
+        <div id="alert" class="alert"></div>
+
+        <!-- Section Paramètres publics -->
+        <div class="section shared-section">
+            <h3>📢 Paramètres publics <span class="info-badge">Visibles par tous</span></h3>
+            
+            <button class="button" onclick="generatePublicParams()">
+                🎲 Générer les paramètres publics (p et g)
+            </button>
+
+            <div class="grid" style="margin-top: 20px;">
+                <div class="input-group">
+                    <label>Prime p (modulus) - Hexadécimal <span class="info-badge">2048 bits</span></label>
+                    <textarea id="primeP" placeholder="Le nombre premier p sera généré ici..." readonly style="background-color: #f8f9fa;"></textarea>
+                    <div class="button-container">
+                        <button class="button button-small" id="copyP" onclick="copyToClipboard('primeP')" style="visibility: hidden;">
+                            📋 Copier p
+                        </button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Générateur g - Hexadécimal</label>
+                    <textarea id="generatorG" placeholder="Le générateur g sera généré ici..." readonly style="background-color: #f8f9fa; min-height: 80px;"></textarea>
+                    <div class="button-container">
+                        <button class="button button-small" id="copyG" onclick="copyToClipboard('generatorG')" style="visibility: hidden;">
+                            📋 Copier g
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Alice -->
+            <div class="section user-card">
+                <h3>👤 Alice (Utilisateur A)</h3>
+                
+                <button class="button" onclick="generateAliceKeys()" style="width: 100%; margin-bottom: 15px;">
+                    🔑 Générer les clés d'Alice
+                </button>
+
+                <div class="input-group">
+                    <label>Clé privée d'Alice (a) <span class="info-badge">SECRET</span></label>
+                    <textarea id="alicePrivate" placeholder="Clé privée secrète d'Alice..." readonly style="background-color: #fff5f7;"></textarea>
+                    <div class="button-container">
+                        <button class="button button-small" id="copyAlicePrivate" onclick="copyToClipboard('alicePrivate')" style="visibility: hidden;">
+                            📋 Copier
+                        </button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Clé publique d'Alice (A = g^a mod p) <span class="info-badge">À PARTAGER</span></label>
+                    <textarea id="alicePublic" placeholder="Clé publique d'Alice (à envoyer à Bob)..." readonly style="background-color: #e8f5e9;"></textarea>
+                    <div class="button-container">
+                        <button class="button button-small" id="copyAlicePublic" onclick="copyToClipboard('alicePublic')" style="visibility: hidden;">
+                            📋 Copier et envoyer à Bob
+                        </button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Clé publique de Bob (B) <span class="info-badge">REÇUE</span></label>
+                    <textarea id="bobPublicForAlice" placeholder="Collez ici la clé publique reçue de Bob..."></textarea>
+                </div>
+
+                <button class="button" onclick="deriveAliceSharedSecret()" style="width: 100%;">
+                    🔐 Calculer la clé partagée (B^a mod p)
+                </button>
+
+                <div id="aliceSharedResult" class="hidden" style="margin-top: 15px;">
+                    <label>Clé secrète partagée d'Alice</label>
+                    <div id="aliceSharedSecret" class="key-display"></div>
+                </div>
+            </div>
+
+            <!-- Bob -->
+            <div class="section user-card">
+                <h3>👤 Bob (Utilisateur B)</h3>
+                
+                <button class="button" onclick="generateBobKeys()" style="width: 100%; margin-bottom: 15px;">
+                    🔑 Générer les clés de Bob
+                </button>
+
+                <div class="input-group">
+                    <label>Clé privée de Bob (b) <span class="info-badge">SECRET</span></label>
+                    <textarea id="bobPrivate" placeholder="Clé privée secrète de Bob..." readonly style="background-color: #fff5f7;"></textarea>
+                    <div class="button-container">
+                        <button class="button button-small" id="copyBobPrivate" onclick="copyToClipboard('bobPrivate')" style="visibility: hidden;">
+                            📋 Copier
+                        </button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Clé publique de Bob (B = g^b mod p) <span class="info-badge">À PARTAGER</span></label>
+                    <textarea id="bobPublic" placeholder="Clé publique de Bob (à envoyer à Alice)..." readonly style="background-color: #e8f5e9;"></textarea>
+                    <div class="button-container">
+                        <button class="button button-small" id="copyBobPublic" onclick="copyToClipboard('bobPublic')" style="visibility: hidden;">
+                            📋 Copier et envoyer à Alice
+                        </button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Clé publique d'Alice (A) <span class="info-badge">REÇUE</span></label>
+                    <textarea id="alicePublicForBob" placeholder="Collez ici la clé publique reçue d'Alice..."></textarea>
+                </div>
+
+                <button class="button" onclick="deriveBobSharedSecret()" style="width: 100%;">
+                    🔐 Calculer la clé partagée (A^b mod p)
+                </button>
+
+                <div id="bobSharedResult" class="hidden" style="margin-top: 15px;">
+                    <label>Clé secrète partagée de Bob</label>
+                    <div id="bobSharedSecret" class="key-display"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Vérification -->
+        <div class="section" style="background: #e8f5e9; border: 2px solid #4caf50;">
+            <h3>✅ Vérification</h3>
+            <button class="button" style="background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);" onclick="verifySharedSecrets()">
+                🔍 Vérifier que les clés partagées sont identiques
+            </button>
+            <div id="verificationResult" class="hidden" style="margin-top: 15px;">
+                <div id="verificationText" class="key-display"></div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>ℹ️ Comment fonctionne Diffie-Hellman classique ?</strong>
+            <br><br>
+            Diffie-Hellman permet à deux personnes (Alice et Bob) d'établir une <strong>clé secrète partagée</strong> en communiquant uniquement sur un canal public (non sécurisé).
+            
+            <div class="steps">
+                <div class="step">
+                    <span class="step-number">1️⃣</span>
+                    Génération des <strong>paramètres publics</strong> (p, g) - Visibles par tous
+                    <br>• p = grand nombre premier (2048 bits)
+                    <br>• g = générateur du groupe (typiquement 2)
+                </div>
+                <div class="step">
+                    <span class="step-number">2️⃣</span>
+                    Alice génère sa <strong>clé privée</strong> (a) aléatoire et calcule sa <strong>clé publique</strong> : <strong>A = g^a mod p</strong>
+                </div>
+                <div class="step">
+                    <span class="step-number">3️⃣</span>
+                    Bob génère sa <strong>clé privée</strong> (b) aléatoire et calcule sa <strong>clé publique</strong> : <strong>B = g^b mod p</strong>
+                </div>
+                <div class="step">
+                    <span class="step-number">4️⃣</span>
+                    Alice et Bob <strong>échangent leurs clés publiques</strong> (A et B) sur le canal public
+                </div>
+                <div class="step">
+                    <span class="step-number">5️⃣</span>
+                    Alice calcule : <strong>s = B^a mod p</strong>
+                </div>
+                <div class="step">
+                    <span class="step-number">6️⃣</span>
+                    Bob calcule : <strong>s = A^b mod p</strong>
+                </div>
+                <div class="step">
+                    <span class="step-number">7️⃣</span>
+                    Les deux obtiennent la <strong>même clé secrète partagée</strong> : s = g^(ab) mod p
+                </div>
+            </div>
+
+            <br>
+            <strong>🔐 Mathématiques :</strong>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>Alice calcule : B^a mod p = (g^b)^a mod p = g^(ba) mod p</li>
+                <li>Bob calcule : A^b mod p = (g^a)^b mod p = g^(ab) mod p</li>
+                <li>Comme ab = ba, ils obtiennent la même clé !</li>
+            </ul>
+            <br>
+            <strong>🛡️ Sécurité :</strong> Un attaquant qui intercepte p, g, A et B ne peut pas calculer la clé partagée sans connaître a ou b. C'est le <strong>problème du logarithme discret</strong>, considéré comme très difficile mathématiquement.
+            <br><br>
+            <strong>⚙️ Implémentation :</strong> Cette version utilise <strong>BigInt natif de JavaScript</strong> pour les calculs sur grands nombres (2048 bits). Les paramètres utilisent le <strong>groupe DH standard RFC 3526 (Group 14)</strong>.
+        </div>
+    </div>
+
+    <script>
+        let publicParams = null;
+        let alicePrivateKey = null;
+        let bobPrivateKey = null;
+
+        function bigIntToHex(bigInt) {
+            let hex = bigInt.toString(16);
+            if (hex.length % 2) hex = '0' + hex;
+            return hex;
+        }
+
+        function hexToBigInt(hex) {
+            return BigInt('0x' + hex);
+        }
+
+        function showMessage(text, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = text;
+            alert.className = `alert alert-${type} show`;
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 3000);
+        }
+
+        // Fonction pour générer un nombre aléatoire de n bits
+        function randomBigInt(bits) {
+            const bytes = Math.ceil(bits / 8);
+            const randomBytes = new Uint8Array(bytes);
+            crypto.getRandomValues(randomBytes);
+            
+            // Convertir en BigInt
+            let hex = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+            return BigInt('0x' + hex);
+        }
+
+        // Exponentiation modulaire : (base^exp) mod m
+        function modPow(base, exp, mod) {
+            let result = 1n;
+            base = base % mod;
+            
+            while (exp > 0n) {
+                if (exp % 2n === 1n) {
+                    result = (result * base) % mod;
+                }
+                exp = exp / 2n;
+                base = (base * base) % mod;
+            }
+            
+            return result;
+        }
+
+        // Génération des paramètres publics
+        function generatePublicParams() {
+            showMessage('⏳ Génération des paramètres...', 'warning');
+            
+            // Utiliser un groupe DH standard (RFC 3526 - Group 14)
+            // Prime de 2048 bits
+            const p = BigInt('0x' + 
+                'ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd1' +
+                '29024e088a67cc74020bbea63b139b22514a08798e3404dd' +
+                'ef9519b3cd3a431b302b0a6df25f14374fe1356d6d51c245' +
+                'e485b576625e7ec6f44c42e9a637ed6b0bff5cb6f406b7ed' +
+                'ee386bfb5a899fa5ae9f24117c4b1fe649286651ece45b3d' +
+                'c2007cb8a163bf0598da48361c55d39a69163fa8fd24cf5f' +
+                '83655d23dca3ad961c62f356208552bb9ed529077096966d' +
+                '670c354e4abc9804f1746c08ca18217c32905e462e36ce3b' +
+                'e39e772c180e86039b2783a2ec07a28fb5c55df06f4c52c9' +
+                'de2bcbf6955817183995497cea956ae515d2261898fa0510' +
+                '15728e5a8aacaa68ffffffffffffffff'
+            );
+            
+            // Générateur = 2
+            const g = 2n;
+            
+            publicParams = { p, g };
+            
+            document.getElementById('primeP').value = bigIntToHex(p);
+            document.getElementById('generatorG').value = bigIntToHex(g);
+            document.getElementById('copyP').style.visibility = 'visible';
+            document.getElementById('copyG').style.visibility = 'visible';
+            
+            showMessage('✅ Paramètres publics générés ! (Groupe DH RFC 3526)', 'success');
+        }
+
+        // Générer les clés d'Alice
+        function generateAliceKeys() {
+            if (!publicParams) {
+                showMessage('⚠️ Générez d\'abord les paramètres publics !', 'warning');
+                return;
+            }
+
+            try {
+                showMessage('⏳ Génération des clés d\'Alice...', 'warning');
+                
+                // Générer une clé privée aléatoire (256 bits)
+                alicePrivateKey = randomBigInt(256);
+                
+                // Calculer la clé publique : A = g^a mod p
+                const alicePublicKey = modPow(publicParams.g, alicePrivateKey, publicParams.p);
+
+                document.getElementById('alicePrivate').value = bigIntToHex(alicePrivateKey);
+                document.getElementById('alicePublic').value = bigIntToHex(alicePublicKey);
+                
+                document.getElementById('copyAlicePrivate').style.visibility = 'visible';
+                document.getElementById('copyAlicePublic').style.visibility = 'visible';
+
+                showMessage('✅ Clés d\'Alice générées !', 'success');
+            } catch (err) {
+                showMessage('❌ Erreur : ' + err.message, 'error');
+            }
+        }
+
+        // Générer les clés de Bob
+        function generateBobKeys() {
+            if (!publicParams) {
+                showMessage('⚠️ Générez d\'abord les paramètres publics !', 'warning');
+                return;
+            }
+
+            try {
+                showMessage('⏳ Génération des clés de Bob...', 'warning');
+                
+                // Générer une clé privée aléatoire (256 bits)
+                bobPrivateKey = randomBigInt(256);
+                
+                // Calculer la clé publique : B = g^b mod p
+                const bobPublicKey = modPow(publicParams.g, bobPrivateKey, publicParams.p);
+
+                document.getElementById('bobPrivate').value = bigIntToHex(bobPrivateKey);
+                document.getElementById('bobPublic').value = bigIntToHex(bobPublicKey);
+                
+                document.getElementById('copyBobPrivate').style.visibility = 'visible';
+                document.getElementById('copyBobPublic').style.visibility = 'visible';
+
+                showMessage('✅ Clés de Bob générées !', 'success');
+            } catch (err) {
+                showMessage('❌ Erreur : ' + err.message, 'error');
+            }
+        }
+
+        // Dériver la clé secrète partagée d'Alice
+        function deriveAliceSharedSecret() {
+            const bobPublicHex = document.getElementById('bobPublicForAlice').value.trim();
+            
+            if (!alicePrivateKey) {
+                showMessage('⚠️ Générez d\'abord les clés d\'Alice !', 'warning');
+                return;
+            }
+
+            if (!bobPublicHex) {
+                showMessage('⚠️ Collez la clé publique de Bob !', 'warning');
+                return;
+            }
+
+            try {
+                showMessage('⏳ Calcul en cours...', 'warning');
+                
+                const bobPublicKey = hexToBigInt(bobPublicHex);
+                
+                // Calculer la clé partagée : s = B^a mod p
+                const sharedSecret = modPow(bobPublicKey, alicePrivateKey, publicParams.p);
+
+                document.getElementById('aliceSharedSecret').textContent = bigIntToHex(sharedSecret);
+                document.getElementById('aliceSharedResult').classList.remove('hidden');
+
+                showMessage('✅ Clé partagée calculée par Alice !', 'success');
+            } catch (err) {
+                showMessage('❌ Erreur : Clé publique de Bob invalide', 'error');
+            }
+        }
+
+        // Dériver la clé secrète partagée de Bob
+        function deriveBobSharedSecret() {
+            const alicePublicHex = document.getElementById('alicePublicForBob').value.trim();
+            
+            if (!bobPrivateKey) {
+                showMessage('⚠️ Générez d\'abord les clés de Bob !', 'warning');
+                return;
+            }
+
+            if (!alicePublicHex) {
+                showMessage('⚠️ Collez la clé publique d\'Alice !', 'warning');
+                return;
+            }
+
+            try {
+                showMessage('⏳ Calcul en cours...', 'warning');
+                
+                const alicePublicKey = hexToBigInt(alicePublicHex);
+                
+                // Calculer la clé partagée : s = A^b mod p
+                const sharedSecret = modPow(alicePublicKey, bobPrivateKey, publicParams.p);
+
+                document.getElementById('bobSharedSecret').textContent = bigIntToHex(sharedSecret);
+                document.getElementById('bobSharedResult').classList.remove('hidden');
+
+                showMessage('✅ Clé partagée calculée par Bob !', 'success');
+            } catch (err) {
+                showMessage('❌ Erreur : Clé publique d\'Alice invalide', 'error');
+            }
+        }
+
+        // Vérifier que les clés partagées sont identiques
+        function verifySharedSecrets() {
+            const aliceSecret = document.getElementById('aliceSharedSecret').textContent;
+            const bobSecret = document.getElementById('bobSharedSecret').textContent;
+
+            if (!aliceSecret || !bobSecret) {
+                showMessage('⚠️ Calculez d\'abord les clés partagées d\'Alice et Bob !', 'warning');
+                return;
+            }
+
+            const resultDiv = document.getElementById('verificationText');
+            
+            if (aliceSecret === bobSecret) {
+                resultDiv.textContent = '✅ SUCCÈS ! Les clés partagées sont IDENTIQUES !\n\n' +
+                    'Alice et Bob ont maintenant la même clé secrète sans jamais l\'avoir échangée directement.\n\n' +
+                    'Clé partagée : ' + aliceSecret;
+                resultDiv.style.background = '#d4edda';
+                resultDiv.style.borderColor = '#c3e6cb';
+                resultDiv.style.color = '#155724';
+                showMessage('✅ Les clés partagées correspondent !', 'success');
+            } else {
+                resultDiv.textContent = '❌ ERREUR ! Les clés partagées sont DIFFÉRENTES.\n\n' +
+                    'Vérifiez que vous avez bien échangé les bonnes clés publiques.';
+                resultDiv.style.background = '#f8d7da';
+                resultDiv.style.borderColor = '#f5c6cb';
+                resultDiv.style.color = '#721c24';
+                showMessage('❌ Les clés ne correspondent pas !', 'error');
+            }
+            
+            document.getElementById('verificationResult').classList.remove('hidden');
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            navigator.clipboard.writeText(element.value || element.textContent);
+            showMessage('📋 Copié dans le presse-papier !', 'success');
+        }
+    </script>
+</body>
+</html>
