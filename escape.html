@@ -288,11 +288,6 @@ CryptoMaster2025
 Les 8 premiers caractères du hash sont le code."
                 </div>
 
-                <div class="hint">
-                    💡 <strong>Indice :</strong> Utilisez l'outil SHA-256 pour hacher le texte "CryptoMaster2025". 
-                    <a href="sha256-hash.html" target="_blank" class="tool-link">🔷 Ouvrir SHA-256</a>
-                </div>
-
                 <div class="input-group">
                     <label>Entrez le code (8 premiers caractères du hash) :</label>
                     <input type="text" id="answer1" placeholder="Exemple: a1b2c3d4">
@@ -318,11 +313,6 @@ Les 8 premiers caractères du hash sont le code."
                 <div class="code-block">
 <strong>Clé AES-256 (hexadécimal) :</strong>
 <div id="aes-key"></div>
-                </div>
-
-                <div class="hint">
-                    💡 <strong>Indice :</strong> Utilisez l'outil AES pour déchiffrer ce message avec la clé fournie.
-                    <a href="aes-encryption.html" target="_blank" class="tool-link">🔒 Ouvrir AES</a>
                 </div>
 
                 <div class="input-group">
@@ -358,10 +348,7 @@ Le mot de passe de la salle 4 est : PHOENIX2025
                 </div>
 
                 <div class="hint">
-                    💡 <strong>Indice :</strong> Utilisez l'outil RSA pour vérifier la signature du message.
-                    <a href="rsa-crypto-final.html" target="_blank" class="tool-link">🔐 Ouvrir RSA</a>
-                    <br><br>
-                    <strong>Attention :</strong> Si la signature est valide ✅, le mot de passe est "PHOENIX2025".<br>
+                    <strong>⚠️ Attention :</strong> Si la signature est valide ✅, le mot de passe est "PHOENIX2025".<br>
                     Si la signature est invalide ❌, le message a été falsifié et le vrai mot de passe est "DRAGON2025".
                 </div>
 
@@ -383,10 +370,6 @@ Le mot de passe de la salle 4 est : PHOENIX2025
                 <p>Pour ouvrir la dernière porte, Alice et Bob doivent établir une clé partagée :</p>
                 
                 <div class="code-block">
-<strong>Paramètres publics :</strong>
-Prime p : <span id="dh-p"></span>
-Générateur g : 02
-
 <strong>Clé publique d'Alice :</strong>
 <div id="alice-public"></div>
 
@@ -395,12 +378,7 @@ Générateur g : 02
                 </div>
 
                 <div class="hint">
-                    💡 <strong>Indice :</strong> Utilisez l'outil Diffie-Hellman. 
-                    1. Générez les paramètres publics
-                    2. Utilisez la clé privée de Bob fournie ci-dessus
-                    3. Calculez la clé publique de Bob
-                    4. Échangez avec Alice pour obtenir la clé partagée
-                    <a href="diffie-hellman.html" target="_blank" class="tool-link">🔄 Ouvrir Diffie-Hellman</a>
+                    💡 <strong>Indice :</strong> Vous êtes Bob. Utilisez votre clé privée et la clé publique d'Alice pour calculer la clé partagée.
                     <br><br>
                     <strong>Le code final :</strong> Les 12 premiers caractères de la clé partagée
                 </div>
@@ -496,11 +474,6 @@ Générateur g : 02
 
         // Générer les données Diffie-Hellman
         function generateDHData() {
-            // Utiliser le même prime que dans diffie-hellman.html
-            const p = 'ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024e088a67cc74020bbea63b139b22514a08798e3404ddef9519b3cd3a431b302b0a6df25f14374fe1356d6d51c245e485b576625e7ec6f44c42e9a637ed6b0bff5cb6f406b7edee386bfb5a899fa5ae9f24117c4b1fe649286651ece45b3dc2007cb8a163bf0598da48361c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552bb9ed529077096966d670c354e4abc9804f1746c08ca18217c32905e462e36ce3be39e772c180e86039b2783a2ec07a28fb5c55df06f4c52c9de2bcbf6955817183995497cea956ae515d2261898fa051015728e5a8aacaa68ffffffffffffffff';
-            
-            document.getElementById('dh-p').textContent = p;
-            
             // Générer des clés pour Alice et Bob
             const alicePrivate = '3a7f8c9e2b1d4f6a8c3e5d7b9f1a2c4e';
             const bobPrivate = '9f2e8c7b6a5d4c3b2a1f9e8d7c6b5a4f';
