@@ -261,29 +261,20 @@
         <div class="section shared-section">
             <h3>📢 Paramètres publics <span class="info-badge">Visibles par tous</span></h3>
             
-            <button class="button" onclick="generatePublicParams()">
-                🎲 Générer les paramètres publics (p et g)
-            </button>
+            <p style="color: #666; margin-bottom: 20px;">
+                Les paramètres publics sont fixes et utilisent le <strong>groupe DH standard RFC 3526 - Group 14 (2048 bits)</strong>.
+                Ces valeurs sont visibles par tous et utilisées pour l'échange de clés.
+            </p>
 
             <div class="grid" style="margin-top: 20px;">
                 <div class="input-group">
-                    <label>Prime p (modulus) - Hexadécimal <span class="info-badge">2048 bits</span></label>
-                    <textarea id="primeP" placeholder="Le nombre premier p sera généré ici..." readonly style="background-color: #f8f9fa;"></textarea>
-                    <div class="button-container">
-                        <button class="button button-small" id="copyP" onclick="copyToClipboard('primeP')" style="visibility: hidden;">
-                            📋 Copier p
-                        </button>
-                    </div>
+                    <label>Prime p (modulus) - Hexadécimal (2048 bits)</label>
+                    <textarea id="primeP" readonly style="background-color: #f8f9fa;"></textarea>
                 </div>
 
                 <div class="input-group">
                     <label>Générateur g - Hexadécimal</label>
-                    <textarea id="generatorG" placeholder="Le générateur g sera généré ici..." readonly style="background-color: #f8f9fa; min-height: 80px;"></textarea>
-                    <div class="button-container">
-                        <button class="button button-small" id="copyG" onclick="copyToClipboard('generatorG')" style="visibility: hidden;">
-                            📋 Copier g
-                        </button>
-                    </div>
+                    <textarea id="generatorG" readonly style="background-color: #f8f9fa; min-height: 80px;"></textarea>
                 </div>
             </div>
         </div>
@@ -300,11 +291,6 @@
                 <div class="input-group">
                     <label>Clé privée d'Alice (a) <span class="info-badge">SECRET</span></label>
                     <textarea id="alicePrivate" placeholder="Clé privée secrète d'Alice..." readonly style="background-color: #fff5f7;"></textarea>
-                    <div class="button-container">
-                        <button class="button button-small" id="copyAlicePrivate" onclick="copyToClipboard('alicePrivate')" style="visibility: hidden;">
-                            📋 Copier
-                        </button>
-                    </div>
                 </div>
 
                 <div class="input-group">
@@ -312,7 +298,7 @@
                     <textarea id="alicePublic" placeholder="Clé publique d'Alice (à envoyer à Bob)..." readonly style="background-color: #e8f5e9;"></textarea>
                     <div class="button-container">
                         <button class="button button-small" id="copyAlicePublic" onclick="copyToClipboard('alicePublic')" style="visibility: hidden;">
-                            📋 Copier et envoyer à Bob
+                            📋 Copier
                         </button>
                     </div>
                 </div>
@@ -343,11 +329,6 @@
                 <div class="input-group">
                     <label>Clé privée de Bob (b) <span class="info-badge">SECRET</span></label>
                     <textarea id="bobPrivate" placeholder="Clé privée secrète de Bob..." readonly style="background-color: #fff5f7;"></textarea>
-                    <div class="button-container">
-                        <button class="button button-small" id="copyBobPrivate" onclick="copyToClipboard('bobPrivate')" style="visibility: hidden;">
-                            📋 Copier
-                        </button>
-                    </div>
                 </div>
 
                 <div class="input-group">
@@ -355,7 +336,7 @@
                     <textarea id="bobPublic" placeholder="Clé publique de Bob (à envoyer à Alice)..." readonly style="background-color: #e8f5e9;"></textarea>
                     <div class="button-container">
                         <button class="button button-small" id="copyBobPublic" onclick="copyToClipboard('bobPublic')" style="visibility: hidden;">
-                            📋 Copier et envoyer à Alice
+                            📋 Copier
                         </button>
                     </div>
                 </div>
@@ -396,8 +377,8 @@
                 <div class="step">
                     <span class="step-number">1️⃣</span>
                     Génération des <strong>paramètres publics</strong> (p, g) - Visibles par tous
-                    <br>• p = grand nombre premier (2048 bits)
-                    <br>• g = générateur du groupe (typiquement 2)
+                    <br>• p = grand nombre premier (2048 bits - RFC 3526 Group 14)
+                    <br>• g = générateur du groupe (fixé à 2)
                 </div>
                 <div class="step">
                     <span class="step-number">2️⃣</span>
@@ -490,12 +471,9 @@
             return result;
         }
 
-        // Génération des paramètres publics
+        // Génération des paramètres publics (Group 14 fixe)
         function generatePublicParams() {
-            showMessage('⏳ Génération des paramètres...', 'warning');
-            
-            // Utiliser un groupe DH standard (RFC 3526 - Group 14)
-            // Prime de 2048 bits
+            // Groupe DH standard (RFC 3526 - Group 14) - 2048 bits
             const p = BigInt('0x' + 
                 'ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd1' +
                 '29024e088a67cc74020bbea63b139b22514a08798e3404dd' +
@@ -510,23 +488,23 @@
                 '15728e5a8aacaa68ffffffffffffffff'
             );
             
-            // Générateur = 2
             const g = 2n;
             
             publicParams = { p, g };
             
             document.getElementById('primeP').value = bigIntToHex(p);
             document.getElementById('generatorG').value = bigIntToHex(g);
-            document.getElementById('copyP').style.visibility = 'visible';
-            document.getElementById('copyG').style.visibility = 'visible';
-            
-            showMessage('✅ Paramètres publics générés ! (Groupe DH RFC 3526)', 'success');
         }
+
+        // Charger automatiquement les paramètres au démarrage
+        window.addEventListener('load', () => {
+            generatePublicParams();
+        });
 
         // Générer les clés d'Alice
         function generateAliceKeys() {
             if (!publicParams) {
-                showMessage('⚠️ Générez d\'abord les paramètres publics !', 'warning');
+                showMessage('⚠️ Erreur : paramètres publics non chargés !', 'error');
                 return;
             }
 
@@ -542,7 +520,6 @@
                 document.getElementById('alicePrivate').value = bigIntToHex(alicePrivateKey);
                 document.getElementById('alicePublic').value = bigIntToHex(alicePublicKey);
                 
-                document.getElementById('copyAlicePrivate').style.visibility = 'visible';
                 document.getElementById('copyAlicePublic').style.visibility = 'visible';
 
                 showMessage('✅ Clés d\'Alice générées !', 'success');
@@ -554,7 +531,7 @@
         // Générer les clés de Bob
         function generateBobKeys() {
             if (!publicParams) {
-                showMessage('⚠️ Générez d\'abord les paramètres publics !', 'warning');
+                showMessage('⚠️ Erreur : paramètres publics non chargés !', 'error');
                 return;
             }
 
@@ -570,7 +547,6 @@
                 document.getElementById('bobPrivate').value = bigIntToHex(bobPrivateKey);
                 document.getElementById('bobPublic').value = bigIntToHex(bobPublicKey);
                 
-                document.getElementById('copyBobPrivate').style.visibility = 'visible';
                 document.getElementById('copyBobPublic').style.visibility = 'visible';
 
                 showMessage('✅ Clés de Bob générées !', 'success');
@@ -675,8 +651,31 @@
 
         function copyToClipboard(elementId) {
             const element = document.getElementById(elementId);
-            navigator.clipboard.writeText(element.value || element.textContent);
-            showMessage('📋 Copié dans le presse-papier !', 'success');
+            const text = element.value || element.textContent;
+            
+            // Essayer avec l'API Clipboard moderne
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showMessage('📋 Copié dans le presse-papier !', 'success');
+                }).catch(err => {
+                    // Fallback si l'API Clipboard échoue
+                    fallbackCopy(element);
+                });
+            } else {
+                // Fallback pour les navigateurs plus anciens
+                fallbackCopy(element);
+            }
+        }
+
+        function fallbackCopy(element) {
+            element.select();
+            element.setSelectionRange(0, 99999); // Pour mobile
+            try {
+                document.execCommand('copy');
+                showMessage('📋 Copié dans le presse-papier !', 'success');
+            } catch (err) {
+                showMessage('❌ Impossible de copier. Sélectionnez manuellement le texte.', 'error');
+            }
         }
     </script>
 </body>
