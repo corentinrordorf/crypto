@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Échange de clés ECDH</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #4facfe;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .section h3 {
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        .button-small {
+            padding: 6px 12px;
+            font-size: 14px;
+            margin-top: 5px;
+            margin-right: 5px;
+        }
+
+        .button-container {
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .alert.show {
+            opacity: 1;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .info-badge {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+            font-weight: 600;
+        }
+
+        .key-display {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #90caf9;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            word-wrap: break-word;
+            color: #0d47a1;
+            font-weight: 600;
+            min-height: 50px;
+            max-height: 120px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-top: 20px;
+        }
+
+        .user-card {
+            border: 2px solid #4facfe;
+        }
+
+        .user-card h3 {
+            color: #4facfe;
+        }
+
+        .shared-section {
+            background: #fff9e6;
+            border: 2px solid #ffc107;
+        }
+
+        .shared-section h3 {
+            color: #f57c00;
+        }
+
+        .steps {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .step {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #4facfe;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .step-number {
+            font-weight: bold;
+            color: #4facfe;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Échange de clés ECDH</h1>
+        <p class="subtitle">Elliptic Curve Diffie-Hellman - Version moderne avec courbes elliptiques</p>
+
+        <!-- Espace réservé pour les messages -->
+        <div id="alert" class="alert"></div>
+
+        <!-- Section Paramètres publics -->
+        <div class="section shared-section">
+            <h3>📢 Courbe elliptique <span class="info-badge">P-256 (NIST)</span></h3>
+            
+            <p style="color: #666; margin-bottom: 15px;">
+                Cette implémentation utilise la courbe elliptique <strong>P-256</strong> (aussi appelée secp256r1), 
+                un standard recommandé par le NIST. Contrairement au DH classique, ECDH n'utilise pas directement 
+                les nombres premiers p et g, mais des points sur une courbe elliptique.
+            </p>
+
+            <div class="info-box" style="background: #fff3cd; border-left: 4px solid #ffc107;">
+                <strong>ℹ️ Courbe P-256 :</strong><br>
+                • Équation : y² = x³ - 3x + b (mod p)<br>
+                • Taille : 256 bits (équivalent à ~3072 bits en RSA)<br>
+                • Plus rapide et plus compact que le DH classique<br>
+                • Utilisé dans TLS, Bitcoin, Signal, etc.
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Alice -->
+            <div class="section user-card">
+                <h3>👤 Alice (Utilisateur A)</h3>
+                
+                <button class="button" onclick="generateAliceKeys()" style="width: 100%; margin-bottom: 15px;">
+                    🔑 Générer les clés d'Alice
+                </button>
+
+                <div class="input-group">
+                    <label>Clé privée d'Alice <span class="info-badge">SECRET</span></label>
+                    <textarea id="alicePrivate" placeholder="Clé privée secrète d'Alice..." readonly style="background-color: #fff5f7;"></textarea>
+                    <div class="button-container">
+                        <button class="button button-small" id="copyAlicePrivate" onclick="copyToClipboard('alicePrivate')" style="visibility: hidden;">
+                            📋 Copier
+                        </button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Clé publique d'Alice (point sur courbe) <span class="info-badge">À PARTAGER</span></label>
+                    <textarea id="alicePublic" placeholder="Clé publique d'Alice (à envoyer à Bob)..." readonly style="background-color: #e8f5e9;"></textarea>
+                    <div class="button-container">
+                        <button class="button button-small" id="copyAlicePublic" onclick="copyToClipboard('alicePublic')" style="visibility: hidden;">
+                            📋 Copier et envoyer à Bob
+                        </button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Clé publique de Bob <span class="info-badge">REÇUE</span></label>
+                    <textarea id="bobPublicForAlice" placeholder="Collez ici la clé publique reçue de Bob..."></textarea>
+                </div>
+
+                <button class="button" onclick="deriveAliceSharedSecret()" style="width: 100%;">
+                    🔐 Calculer la clé partagée
+                </button>
+
+                <div id="aliceSharedResult" class="hidden" style="margin-top: 15px;">
+                    <label>Clé secrète partagée d'Alice</label>
+                    <div id="aliceSharedSecret" class="key-display"></div>
+                </div>
+            </div>
+
+            <!-- Bob -->
+            <div class="section user-card">
+                <h3>👤 Bob (Utilisateur B)</h3>
+                
+                <button class="button" onclick="generateBobKeys()" style="width: 100%; margin-bottom: 15px;">
+                    🔑 Générer les clés de Bob
+                </button>
+
+                <div class="input-group">
+                    <label>Clé privée de Bob <span class="info-badge">SECRET</span></label>
+                    <textarea id="bobPrivate" placeholder="Clé privée secrète de Bob..." readonly style="background-color: #fff5f7;"></textarea>
+                    <div class="button-container">
+                        <button class="button button-small" id="copyBobPrivate" onclick="copyToClipboard('bobPrivate')" style="visibility: hidden;">
+                            📋 Copier
+                        </button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Clé publique de Bob (point sur courbe) <span class="info-badge">À PARTAGER</span></label>
+                    <textarea id="bobPublic" placeholder="Clé publique de Bob (à envoyer à Alice)..." readonly style="background-color: #e8f5e9;"></textarea>
+                    <div class="button-container">
+                        <button class="button button-small" id="copyBobPublic" onclick="copyToClipboard('bobPublic')" style="visibility: hidden;">
+                            📋 Copier et envoyer à Alice
+                        </button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Clé publique d'Alice <span class="info-badge">REÇUE</span></label>
+                    <textarea id="alicePublicForBob" placeholder="Collez ici la clé publique reçue d'Alice..."></textarea>
+                </div>
+
+                <button class="button" onclick="deriveBobSharedSecret()" style="width: 100%;">
+                    🔐 Calculer la clé partagée
+                </button>
+
+                <div id="bobSharedResult" class="hidden" style="margin-top: 15px;">
+                    <label>Clé secrète partagée de Bob</label>
+                    <div id="bobSharedSecret" class="key-display"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Vérification -->
+        <div class="section" style="background: #e8f5e9; border: 2px solid #4caf50;">
+            <h3>✅ Vérification</h3>
+            <button class="button" style="background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);" onclick="verifySharedSecrets()">
+                🔍 Vérifier que les clés partagées sont identiques
+            </button>
+            <div id="verificationResult" class="hidden" style="margin-top: 15px;">
+                <div id="verificationText" class="key-display"></div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>ℹ️ Comment fonctionne ECDH (Elliptic Curve Diffie-Hellman) ?</strong>
+            <br><br>
+            ECDH est la version moderne de Diffie-Hellman basée sur les <strong>courbes elliptiques</strong>.
+            
+            <div class="steps">
+                <div class="step">
+                    <span class="step-number">1️⃣</span>
+                    Une <strong>courbe elliptique standard</strong> est choisie (P-256) - Publique
+                </div>
+                <div class="step">
+                    <span class="step-number">2️⃣</span>
+                    Alice génère un <strong>nombre privé</strong> (a) et calcule un <strong>point public</strong> : A = a·G (où G est le point générateur)
+                </div>
+                <div class="step">
+                    <span class="step-number">3️⃣</span>
+                    Bob génère un <strong>nombre privé</strong> (b) et calcule un <strong>point public</strong> : B = b·G
+                </div>
+                <div class="step">
+                    <span class="step-number">4️⃣</span>
+                    Alice et Bob <strong>échangent leurs points publics</strong> (A et B) sur un canal non sécurisé
+                </div>
+                <div class="step">
+                    <span class="step-number">5️⃣</span>
+                    Alice calcule : <strong>S = a·B</strong> (multiplication scalaire du point B par a)
+                </div>
+                <div class="step">
+                    <span class="step-number">6️⃣</span>
+                    Bob calcule : <strong>S = b·A</strong> (multiplication scalaire du point A par b)
+                </div>
+                <div class="step">
+                    <span class="step-number">7️⃣</span>
+                    Les deux obtiennent le <strong>même point S</strong> sur la courbe = a·b·G
+                </div>
+            </div>
+
+            <br>
+            <strong>🔐 Mathématiques :</strong>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>Alice calcule : a·B = a·(b·G) = (a·b)·G</li>
+                <li>Bob calcule : b·A = b·(a·G) = (b·a)·G</li>
+                <li>Comme a·b = b·a, ils obtiennent le même point S sur la courbe !</li>
+            </ul>
+            <br>
+            <strong>🛡️ Sécurité :</strong> Un attaquant qui intercepte A et B ne peut pas calculer le secret partagé sans connaître a ou b. 
+            C'est le <strong>problème du logarithme discret sur courbe elliptique (ECDLP)</strong>, encore plus difficile que le DLP classique.
+            <br><br>
+            <strong>⚙️ Implémentation :</strong> Cette version utilise l'<strong>API Web Crypto</strong> native du navigateur avec la courbe <strong>P-256 (secp256r1)</strong>.
+            <br><br>
+            <strong>🔗 Comparaison :</strong> 
+            <a href="diffie-hellman.html" style="color: #1976d2; font-weight: bold;">➡️ Voir la version DH classique</a>
+        </div>
+    </div>
+
+    <script>
+        let aliceKeyPair = null;
+        let bobKeyPair = null;
+
+        function arrayBufferToHex(buffer) {
+            return Array.from(new Uint8Array(buffer))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        }
+
+        function hexToArrayBuffer(hex) {
+            const bytes = new Uint8Array(hex.length / 2);
+            for (let i = 0; i < hex.length; i += 2) {
+                bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+            }
+            return bytes.buffer;
+        }
+
+        function showMessage(text, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = text;
+            alert.className = `alert alert-${type} show`;
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 3000);
+        }
+
+        // Générer les clés d'Alice
+        async function generateAliceKeys() {
+            try {
+                // Générer une paire de clés ECDH
+                aliceKeyPair = await window.crypto.subtle.generateKey(
+                    {
+                        name: 'ECDH',
+                        namedCurve: 'P-256'
+                    },
+                    true,
+                    ['deriveKey', 'deriveBits']
+                );
+
+                // Exporter les clés
+                const privateKey = await window.crypto.subtle.exportKey('pkcs8', aliceKeyPair.privateKey);
+                const publicKey = await window.crypto.subtle.exportKey('raw', aliceKeyPair.publicKey);
+
+                document.getElementById('alicePrivate').value = arrayBufferToHex(privateKey);
+                document.getElementById('alicePublic').value = arrayBufferToHex(publicKey);
+                
+                document.getElementById('copyAlicePrivate').style.visibility = 'visible';
+                document.getElementById('copyAlicePublic').style.visibility = 'visible';
+
+                showMessage('✅ Clés d\'Alice générées !', 'success');
+            } catch (err) {
+                showMessage('❌ Erreur : ' + err.message, 'error');
+            }
+        }
+
+        // Générer les clés de Bob
+        async function generateBobKeys() {
+            try {
+                // Générer une paire de clés ECDH
+                bobKeyPair = await window.crypto.subtle.generateKey(
+                    {
+                        name: 'ECDH',
+                        namedCurve: 'P-256'
+                    },
+                    true,
+                    ['deriveKey', 'deriveBits']
+                );
+
+                // Exporter les clés
+                const privateKey = await window.crypto.subtle.exportKey('pkcs8', bobKeyPair.privateKey);
+                const publicKey = await window.crypto.subtle.exportKey('raw', bobKeyPair.publicKey);
+
+                document.getElementById('bobPrivate').value = arrayBufferToHex(privateKey);
+                document.getElementById('bobPublic').value = arrayBufferToHex(publicKey);
+                
+                document.getElementById('copyBobPrivate').style.visibility = 'visible';
+                document.getElementById('copyBobPublic').style.visibility = 'visible';
+
+                showMessage('✅ Clés de Bob générées !', 'success');
+            } catch (err) {
+                showMessage('❌ Erreur : ' + err.message, 'error');
+            }
+        }
+
+        // Dériver la clé secrète partagée d'Alice
+        async function deriveAliceSharedSecret() {
+            const bobPublicHex = document.getElementById('bobPublicForAlice').value.trim();
+            
+            if (!aliceKeyPair) {
+                showMessage('⚠️ Générez d\'abord les clés d\'Alice !', 'warning');
+                return;
+            }
+
+            if (!bobPublicHex) {
+                showMessage('⚠️ Collez la clé publique de Bob !', 'warning');
+                return;
+            }
+
+            try {
+                // Importer la clé publique de Bob
+                const bobPublicKey = await window.crypto.subtle.importKey(
+                    'raw',
+                    hexToArrayBuffer(bobPublicHex),
+                    {
+                        name: 'ECDH',
+                        namedCurve: 'P-256'
+                    },
+                    false,
+                    []
+                );
+
+                // Dériver la clé secrète partagée
+                const sharedSecret = await window.crypto.subtle.deriveBits(
+                    {
+                        name: 'ECDH',
+                        public: bobPublicKey
+                    },
+                    aliceKeyPair.privateKey,
+                    256
+                );
+
+                const sharedSecretHex = arrayBufferToHex(sharedSecret);
+                document.getElementById('aliceSharedSecret').textContent = sharedSecretHex;
+                document.getElementById('aliceSharedResult').classList.remove('hidden');
+
+                showMessage('✅ Clé partagée calculée par Alice !', 'success');
+            } catch (err) {
+                showMessage('❌ Erreur : Clé publique de Bob invalide', 'error');
+            }
+        }
+
+        // Dériver la clé secrète partagée de Bob
+        async function deriveBobSharedSecret() {
+            const alicePublicHex = document.getElementById('alicePublicForBob').value.trim();
+            
+            if (!bobKeyPair) {
+                showMessage('⚠️ Générez d\'abord les clés de Bob !', 'warning');
+                return;
+            }
+
+            if (!alicePublicHex) {
+                showMessage('⚠️ Collez la clé publique d\'Alice !', 'warning');
+                return;
+            }
+
+            try {
+                // Importer la clé publique d'Alice
+                const alicePublicKey = await window.crypto.subtle.importKey(
+                    'raw',
+                    hexToArrayBuffer(alicePublicHex),
+                    {
+                        name: 'ECDH',
+                        namedCurve: 'P-256'
+                    },
+                    false,
+                    []
+                );
+
+                // Dériver la clé secrète partagée
+                const sharedSecret = await window.crypto.subtle.deriveBits(
+                    {
+                        name: 'ECDH',
+                        public: alicePublicKey
+                    },
+                    bobKeyPair.privateKey,
+                    256
+                );
+
+                const sharedSecretHex = arrayBufferToHex(sharedSecret);
+                document.getElementById('bobSharedSecret').textContent = sharedSecretHex;
+                document.getElementById('bobSharedResult').classList.remove('hidden');
+
+                showMessage('✅ Clé partagée calculée par Bob !', 'success');
+            } catch (err) {
+                showMessage('❌ Erreur : Clé publique d\'Alice invalide', 'error');
+            }
+        }
+
+        // Vérifier que les clés partagées sont identiques
+        function verifySharedSecrets() {
+            const aliceSecret = document.getElementById('aliceSharedSecret').textContent;
+            const bobSecret = document.getElementById('bobSharedSecret').textContent;
+
+            if (!aliceSecret || !bobSecret) {
+                showMessage('⚠️ Calculez d\'abord les clés partagées d\'Alice et Bob !', 'warning');
+                return;
+            }
+
+            const resultDiv = document.getElementById('verificationText');
+            
+            if (aliceSecret === bobSecret) {
+                resultDiv.textContent = '✅ SUCCÈS ! Les clés partagées sont IDENTIQUES !\n\n' +
+                    'Alice et Bob ont maintenant la même clé secrète sans jamais l\'avoir échangée directement.\n\n' +
+                    'Clé partagée : ' + aliceSecret;
+                resultDiv.style.background = '#d4edda';
+                resultDiv.style.borderColor = '#c3e6cb';
+                resultDiv.style.color = '#155724';
+                showMessage('✅ Les clés partagées correspondent !', 'success');
+            } else {
+                resultDiv.textContent = '❌ ERREUR ! Les clés partagées sont DIFFÉRENTES.\n\n' +
+                    'Vérifiez que vous avez bien échangé les bonnes clés publiques.';
+                resultDiv.style.background = '#f8d7da';
+                resultDiv.style.borderColor = '#f5c6cb';
+                resultDiv.style.color = '#721c24';
+                showMessage('❌ Les clés ne correspondent pas !', 'error');
+            }
+            
+            document.getElementById('verificationResult').classList.remove('hidden');
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            navigator.clipboard.writeText(element.value || element.textContent);
+            showMessage('📋 Copié dans le presse-papier !', 'success');
+        }
+    </script>
+</body>
+</html>
