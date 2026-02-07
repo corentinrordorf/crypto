@@ -136,6 +136,10 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
+
+        .hidden {
+            display: none !important;
+        }
         
         .hint {
             background: rgba(255, 193, 7, 0.1);
@@ -254,6 +258,61 @@
 </head>
 <body>
     <div class="container">
+        <!-- Écran de mot de passe -->
+        <div id="passwordScreen" style="text-align: center; padding: 60px 40px;">
+            <h1 style="color: #667eea; font-size: 2.5em; margin-bottom: 15px;">🔐 Laboratoire de Cryptographie</h1>
+            <p style="color: #aaa; font-size: 1.2em;">Accès sécurisé requis</p>
+
+            <div style="background: rgba(102, 126, 234, 0.1); border-left: 4px solid #667eea; padding: 25px; margin: 40px auto; text-align: left; border-radius: 8px; max-width: 700px;">
+                <h3 style="color: #667eea; margin-top: 0;">🛡️ Pourquoi un mot de passe ?</h3>
+                <p style="line-height: 1.8; color: #ddd;">
+                    En sécurité informatique, un <strong>mot de passe</strong> est la première ligne de défense. 
+                    Il permet de :
+                </p>
+                <ul style="line-height: 2; color: #ddd; margin-left: 20px;">
+                    <li><strong>Authentifier</strong> l'utilisateur (prouver votre identité)</li>
+                    <li><strong>Autoriser</strong> l'accès à des ressources protégées</li>
+                    <li><strong>Protéger</strong> les données contre les accès non autorisés</li>
+                </ul>
+                <p style="line-height: 1.8; color: #ddd; margin-top: 15px;">
+                    Un bon mot de passe doit être :
+                    <br>✅ <strong>Long</strong> (au moins 12 caractères)
+                    <br>✅ <strong>Complexe</strong> (majuscules, minuscules, chiffres, symboles)
+                    <br>✅ <strong>Unique</strong> (différent pour chaque service)
+                    <br>✅ <strong>Imprévisible</strong> (pas de mots du dictionnaire)
+                </p>
+                <div style="background: rgba(255, 193, 7, 0.1); border-left: 4px solid #ffc107; padding: 15px; margin-top: 20px; border-radius: 4px;">
+                    <strong style="color: #ffd54f;">💡 Le saviez-vous ?</strong>
+                    <p style="margin-top: 10px; color: #ddd; line-height: 1.6;">
+                        Les mots de passe ne sont jamais stockés en clair ! Ils sont <strong>hachés</strong> 
+                        avec des algorithmes comme SHA-256 (que vous allez découvrir dans cet escape game). 
+                        Ainsi, même si une base de données est compromise, les mots de passe restent protégés.
+                    </p>
+                </div>
+            </div>
+
+            <div style="max-width: 400px; margin: 30px auto;">
+                <label style="color: #ddd; display: block; margin-bottom: 10px; font-weight: 600;">Entrez le mot de passe pour accéder au laboratoire :</label>
+                <input type="password" id="gamePassword" placeholder="Mot de passe..." 
+                       style="width: 100%; padding: 15px; border: 2px solid #667eea; border-radius: 8px; background: rgba(0,0,0,0.3); color: #fff; font-size: 18px; text-align: center;"
+                       onkeypress="if(event.key==='Enter') checkPassword()">
+            </div>
+
+            <button class="button" onclick="checkPassword()" style="font-size: 1.2em; padding: 15px 40px;">
+                🔓 Déverrouiller le laboratoire
+            </button>
+
+            <div id="passwordError" style="display: none; margin-top: 20px;">
+                <div class="error">❌ Mot de passe incorrect. Réessayez.</div>
+            </div>
+
+            <p style="color: #999; margin-top: 40px; font-size: 0.9em;">
+                <strong>Indice :</strong> Le mot de passe a été communiqué par votre enseignant.
+            </p>
+        </div>
+
+        <!-- Contenu principal de l'escape game (caché par défaut) -->
+        <div id="gameContent" class="hidden">
         <div class="header">
             <h1>🔐 Cryptographic Escape Room</h1>
             <p>Vous êtes piégé dans un laboratoire de cryptographie. Utilisez vos outils pour vous échapper !</p>
@@ -411,18 +470,42 @@ Le mot de passe de la salle 4 est : PHOENIX2025
                 Avec l'aide de <strong>Claude.ai</strong>
             </p>
         </div>
+
+        </div> <!-- Fin gameContent -->
     </div>
 
     <script>
-        // Timer
-        let startTime = Date.now();
-        let timerInterval = setInterval(() => {
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
-            const minutes = Math.floor(elapsed / 60);
-            const seconds = elapsed % 60;
-            document.getElementById('timer').textContent = 
-                `⏱️ ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-        }, 1000);
+        // Mot de passe de l'escape game
+        const GAME_PASSWORD = "crypto2026"; // Changez ce mot de passe selon vos besoins
+
+        function checkPassword() {
+            const input = document.getElementById('gamePassword').value;
+            if (input === GAME_PASSWORD) {
+                document.getElementById('passwordScreen').style.display = 'none';
+                document.getElementById('gameContent').style.display = 'block';
+                document.getElementById('gameContent').classList.remove('hidden');
+                startTimer(); // Démarrer le chrono
+            } else {
+                document.getElementById('passwordError').style.display = 'block';
+                document.getElementById('gamePassword').value = '';
+                document.getElementById('gamePassword').focus();
+            }
+        }
+
+        // Timer (modifié pour démarrer seulement après le mot de passe)
+        let startTime;
+        let timerInterval;
+
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('timer').textContent = 
+                    `⏱️ ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }, 1000);
+        }
 
         // Génération des données cryptographiques
         const correctAnswers = {
