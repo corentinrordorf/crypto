@@ -308,7 +308,7 @@
         </div>
 
         <!-- Escape Game Challenge -->
-        <div style="margin-top: 40px; text-align: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 40px; border-radius: 16px; border: 3px solid #667eea; box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);">
+        <div class="escape-challenge" style="margin-top: 40px; text-align: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 40px 20px; border-radius: 16px; border: 3px solid #667eea; box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);">
             <h2 style="color: #667eea; font-size: 2em; margin-bottom: 15px;">🎮 Challenge : Escape Game Cryptographique</h2>
             <p style="color: #aaa; font-size: 1.1em; margin-bottom: 25px; line-height: 1.6;">
                 Testez vos compétences en cryptographie ! Vous êtes piégé dans un laboratoire.<br>
@@ -319,14 +319,32 @@
             </a>
         </div>
 
+        <style>
+            @media (max-width: 768px) {
+                .escape-challenge {
+                    padding: 30px 15px !important;
+                    margin-left: 0 !important;
+                    margin-right: 0 !important;
+                }
+                .escape-challenge h2 {
+                    font-size: 1.5em !important;
+                }
+                .escape-challenge p {
+                    font-size: 0.95em !important;
+                }
+                .escape-challenge br {
+                    display: none;
+                }
+            }
+        </style>
+
         <div class="info-box">
             <strong>🛡️ Sécurité et confidentialité</strong>
             <br><br>
             Tous les outils utilisent l'API Web Crypto de votre navigateur. 
             Toutes les opérations cryptographiques sont effectuées <strong>localement sur votre appareil</strong>. 
             Aucune clé, aucun message, aucun fichier n'est jamais envoyé à un serveur externe.
-            <br><br>
-            </div>
+        </div>
 
         <!-- Crédits -->
         <div style="text-align: center; margin-top: 40px; padding: 20px; color: #999; font-size: 0.95em;">
