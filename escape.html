@@ -389,15 +389,25 @@ Les 8 premiers caractères du hash sont le code."
             <h2>🔐 Salle 3 : Signature numérique</h2>
             
             <div class="enigma">
-                <p>Vous trouvez un document et une signature numérique. Vous devez vérifier son authenticité :</p>
+                <p>Vous trouvez quatre documents avec des mots de passe possibles, mais une seule signature numérique. 
+                Vous devez vérifier lequel des quatre documents a été signé correctement :</p>
                 
                 <div class="code-block">
-<strong>Message :</strong>
+<strong>Document 1 :</strong>
 Le mot de passe de la salle 4 est : PHOENIX2025
+
+<strong>Document 2 :</strong>
+Le mot de passe de la salle 4 est : EAGLE2025
+
+<strong>Document 3 :</strong>
+Le mot de passe de la salle 4 est : DRAGON2025
+
+<strong>Document 4 :</strong>
+Le mot de passe de la salle 4 est : FALCON2025
                 </div>
 
                 <div class="code-block">
-<strong>Signature (hexadécimal) :</strong>
+<strong>Signature unique (hexadécimal) :</strong>
 <div id="signature"></div>
                 </div>
 
@@ -407,13 +417,15 @@ Le mot de passe de la salle 4 est : PHOENIX2025
                 </div>
 
                 <div class="hint">
-                    <strong>⚠️ Attention :</strong> Si la signature est valide ✅, le mot de passe est "PHOENIX2025".<br>
-                    Si la signature est invalide ❌, le message a été falsifié et le vrai mot de passe est "DRAGON2025".
+                    <strong>⚠️ Instructions :</strong> 
+                    <br>Testez la signature avec chaque document.
+                    <br>Un seul document aura une signature <strong>valide ✅</strong>.
+                    <br>C'est celui-là qui contient le bon mot de passe !
                 </div>
 
                 <div class="input-group">
-                    <label>Entrez le mot de passe correct :</label>
-                    <input type="text" id="answer3" placeholder="PHOENIX2025 ou DRAGON2025">
+                    <label>Entrez le mot de passe du document correctement signé :</label>
+                    <input type="text" id="answer3" placeholder="PHOENIX2025, EAGLE2025, DRAGON2025 ou FALCON2025">
                 </div>
 
                 <button class="button" onclick="checkAnswer3()">Valider</button>
@@ -463,7 +475,7 @@ Le mot de passe de la salle 4 est : PHOENIX2025
         <!-- Footer -->
         <div style="text-align: center; margin-top: 60px; padding: 30px; background: rgba(255,255,255,0.05); border-radius: 12px; backdrop-filter: blur(10px);">
             <a href="index.html" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 12px 30px; border-radius: 8px; font-size: 1.1em; font-weight: 600; margin-bottom: 20px;">
-                🔧 Lien vers les outils cryptographiques
+                🔧 Retour aux outils cryptographiques
             </a>
             <p style="color: #aaa; margin-top: 20px; font-size: 0.95em;">
                 Codé par <strong>Corentin Rordorf</strong> - CECG De Staël<br>
@@ -476,7 +488,7 @@ Le mot de passe de la salle 4 est : PHOENIX2025
 
     <script>
         // Mot de passe de l'escape game
-        const GAME_PASSWORD = "crypto2026"; // Changez ce mot de passe selon vos besoins
+        const GAME_PASSWORD = "crypto2025"; // Changez ce mot de passe selon vos besoins
 
         function checkPassword() {
             const input = document.getElementById('gamePassword').value;
@@ -543,7 +555,7 @@ Le mot de passe de la salle 4 est : PHOENIX2025
             document.getElementById('encrypted-message').textContent = arrayBufferToHex(combined);
         }
 
-        // Générer la signature RSA (invalide pour l'énigme)
+        // Générer la signature RSA (signer le document 3 : DRAGON2025)
         async function generateRSAData() {
             const keyPair = await window.crypto.subtle.generateKey(
                 { name: 'RSA-PSS', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' },
@@ -554,12 +566,12 @@ Le mot de passe de la salle 4 est : PHOENIX2025
             const publicKey = await window.crypto.subtle.exportKey('spki', keyPair.publicKey);
             const publicKeyHex = arrayBufferToHex(publicKey);
             
-            // Signer un AUTRE message pour que la signature soit invalide
-            const fakeMessage = new TextEncoder().encode("Message falsifié");
+            // Signer le document 3 (DRAGON2025) - c'est le bon !
+            const correctMessage = new TextEncoder().encode("Le mot de passe de la salle 4 est : DRAGON2025");
             const signature = await window.crypto.subtle.sign(
                 { name: 'RSA-PSS', saltLength: 32 },
                 keyPair.privateKey,
-                fakeMessage
+                correctMessage
             );
             
             document.getElementById('rsa-public').textContent = publicKeyHex;
