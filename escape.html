@@ -475,7 +475,7 @@ Le mot de passe de la salle 4 est : FALCON2025
         <!-- Footer -->
         <div style="text-align: center; margin-top: 60px; padding: 30px; background: rgba(255,255,255,0.05); border-radius: 12px; backdrop-filter: blur(10px);">
             <a href="index.html" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 12px 30px; border-radius: 8px; font-size: 1.1em; font-weight: 600; margin-bottom: 20px;">
-                🔧 Lien vers les outils cryptographiques
+                🔧 Retour aux outils cryptographiques
             </a>
             <p style="color: #aaa; margin-top: 20px; font-size: 0.95em;">
                 Codé par <strong>Corentin Rordorf</strong> - CECG De Staël<br>
@@ -580,19 +580,66 @@ Le mot de passe de la salle 4 est : FALCON2025
 
         // Générer les données Diffie-Hellman
         function generateDHData() {
-            // Générer des clés pour Alice et Bob
-            const alicePrivate = '3a7f8c9e2b1d4f6a8c3e5d7b9f1a2c4e';
-            const bobPrivate = '9f2e8c7b6a5d4c3b2a1f9e8d7c6b5a4f';
+            // Utiliser le même prime p que dans diffie-hellman.html (RFC 3526 Group 14)
+            const p = BigInt('0x' + 
+                'ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd1' +
+                '29024e088a67cc74020bbea63b139b22514a08798e3404dd' +
+                'ef9519b3cd3a431b302b0a6df25f14374fe1356d6d51c245' +
+                'e485b576625e7ec6f44c42e9a637ed6b0bff5cb6f406b7ed' +
+                'ee386bfb5a899fa5ae9f24117c4b1fe649286651ece45b3d' +
+                'c2007cb8a163bf0598da48361c55d39a69163fa8fd24cf5f' +
+                '83655d23dca3ad961c62f356208552bb9ed529077096966d' +
+                '670c354e4abc9804f1746c08ca18217c32905e462e36ce3b' +
+                'e39e772c180e86039b2783a2ec07a28fb5c55df06f4c52c9' +
+                'de2bcbf6955817183995497cea956ae515d2261898fa0510' +
+                '15728e5a8aacaa68ffffffffffffffff'
+            );
+            const g = 2n;
             
-            // Simuler les calculs (en réalité il faudrait BigInt, mais pour l'exemple...)
-            const alicePublic = 'a2c5f8d3e9b4c7a1f6d2e8b3c9f5a2d7e4b8c1f5a9d3e7b2c6f8a4d1e5b9c3f7a2d8e4b6c1f9a5d3e7b2c8f4a6d1e9b5c3f7a2d4e8b6c1f5a9d3e7b2c8f4a6d1e5b9c3f7a2d8e4b6c1f9a5d3e7b2c8f4a6d1e9b5c3f7a2d4e8b6c1f5a9d3e7b2c8f4a6d1e5b9c3f7a2d8e4b6c1f9a5d3e7b2c8f4a6d1e9b5c3f7a2d4e8b6c1f5a9d3e7b2c8f4a6d1e5b9c3f7a2d8e4b6c1f9a5d3e7b2c8f4a6d1e9b5c3f7a2d4e8b6c1f5a9d3e7b2c8f4a6d1e5b9c3f7a2d8e4b6c1f9a5d3e7b2c8f4a6d1e9b5c3f7a2d4e8b6c1f5a9d3e7b2c8f4a6d1';
+            // Clés privées fixes (pour reproductibilité de l'escape game)
+            const alicePrivate = BigInt('0x3a7f8c9e2b1d4f6a8c3e5d7b9f1a2c4e5b8d1f4a7c2e9b6d3f8a5c1e4b7d2f9a6');
+            const bobPrivate = BigInt('0x9f2e8c7b6a5d4c3b2a1f9e8d7c6b5a4f3e2d1c9b8a7f6e5d4c3b2a1f9e8d7c6b5');
             
-            document.getElementById('alice-public').textContent = alicePublic;
-            document.getElementById('bob-private').textContent = bobPrivate;
+            // Fonction d'exponentiation modulaire
+            function modPow(base, exp, mod) {
+                let result = 1n;
+                base = base % mod;
+                while (exp > 0n) {
+                    if (exp % 2n === 1n) result = (result * base) % mod;
+                    exp = exp / 2n;
+                    base = (base * base) % mod;
+                }
+                return result;
+            }
             
-            // La clé partagée devrait être calculée par l'étudiant
-            correctAnswers.answer4 = 'e7c3a9f2d4b8';
+            // Calculer les clés publiques : A = g^a mod p
+            const alicePublic = modPow(g, alicePrivate, p);
+            
+            // Calculer la clé partagée : s = A^b mod p (Bob calcule avec sa clé privée et la clé publique d'Alice)
+            const sharedSecret = modPow(alicePublic, bobPrivate, p);
+            
+            // Convertir en hexadécimal avec padding
+            function bigIntToHex(n, minLength = 0) {
+                let hex = n.toString(16);
+                if (hex.length % 2) hex = '0' + hex;
+                // Padder avec des zéros si nécessaire
+                while (hex.length < minLength) {
+                    hex = '00' + hex;
+                }
+                return hex;
+            }
+            
+            const alicePublicHex = bigIntToHex(alicePublic, 512);  // 2048 bits = 512 caractères hex
+            const bobPrivateHex = bigIntToHex(bobPrivate, 64);     // 256 bits = 64 caractères hex
+            const sharedSecretHex = bigIntToHex(sharedSecret, 512); // 2048 bits = 512 caractères hex
+            
+            document.getElementById('alice-public').textContent = alicePublicHex;
+            document.getElementById('bob-private').textContent = bobPrivateHex;
+            
+            // La réponse est les 12 premiers caractères de la clé partagée
+            correctAnswers.answer4 = sharedSecretHex.substring(0, 12);
         }
+
 
         function arrayBufferToHex(buffer) {
             return Array.from(new Uint8Array(buffer))
