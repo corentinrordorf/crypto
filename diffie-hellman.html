@@ -290,7 +290,7 @@
 
                 <div class="input-group">
                     <label>Clé privée d'Alice (a) <span class="info-badge">SECRET</span></label>
-                    <textarea id="alicePrivate" placeholder="Clé privée secrète d'Alice..." style="background-color: #fff5f7;"></textarea>
+                    <textarea id="alicePrivate" placeholder="Clé privée secrète d'Alice..." style="background-color: #fff5f7;" oninput="updateAlicePublicKey()"></textarea>
                 </div>
 
                 <div class="input-group">
@@ -328,7 +328,7 @@
 
                 <div class="input-group">
                     <label>Clé privée de Bob (b) <span class="info-badge">SECRET</span></label>
-                    <textarea id="bobPrivate" placeholder="Clé privée secrète de Bob..." style="background-color: #fff5f7;"></textarea>
+                    <textarea id="bobPrivate" placeholder="Clé privée secrète de Bob..." style="background-color: #fff5f7;" oninput="updateBobPublicKey()"></textarea>
                 </div>
 
                 <div class="input-group">
@@ -504,6 +504,64 @@
         window.addEventListener('load', () => {
             generatePublicParams();
         });
+
+        // Recalculer la clé publique d'Alice quand la clé privée change
+        function updateAlicePublicKey() {
+            const alicePrivateHex = document.getElementById('alicePrivate').value.trim();
+            
+            if (!alicePrivateHex) {
+                document.getElementById('alicePublic').value = '';
+                return;
+            }
+            
+            if (!publicParams) {
+                return;
+            }
+            
+            try {
+                alicePrivateKey = hexToBigInt(alicePrivateHex);
+                
+                if (!alicePrivateKey || alicePrivateKey <= 0n) {
+                    document.getElementById('alicePublic').value = '';
+                    return;
+                }
+                
+                const alicePublicKey = modPow(publicParams.g, alicePrivateKey, publicParams.p);
+                document.getElementById('alicePublic').value = bigIntToHex(alicePublicKey);
+                document.getElementById('copyAlicePublic').style.visibility = 'visible';
+            } catch (err) {
+                document.getElementById('alicePublic').value = '';
+            }
+        }
+        
+        // Recalculer la clé publique de Bob quand la clé privée change
+        function updateBobPublicKey() {
+            const bobPrivateHex = document.getElementById('bobPrivate').value.trim();
+            
+            if (!bobPrivateHex) {
+                document.getElementById('bobPublic').value = '';
+                return;
+            }
+            
+            if (!publicParams) {
+                return;
+            }
+            
+            try {
+                bobPrivateKey = hexToBigInt(bobPrivateHex);
+                
+                if (!bobPrivateKey || bobPrivateKey <= 0n) {
+                    document.getElementById('bobPublic').value = '';
+                    return;
+                }
+                
+                const bobPublicKey = modPow(publicParams.g, bobPrivateKey, publicParams.p);
+                document.getElementById('bobPublic').value = bigIntToHex(bobPublicKey);
+                document.getElementById('copyBobPublic').style.visibility = 'visible';
+            } catch (err) {
+                document.getElementById('bobPublic').value = '';
+            }
+        }
 
         // Générer les clés d'Alice
         function generateAliceKeys() {
