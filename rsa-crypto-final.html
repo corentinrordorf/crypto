@@ -161,10 +161,13 @@
             align-items: center;
             opacity: 0;
             transition: opacity 0.3s ease;
+            position: relative;
+            z-index: 1000;
         }
         
         .alert.show {
-            opacity: 1;
+            opacity: 1 !important;
+            display: flex !important;
         }
         
         .alert-success {
@@ -362,6 +365,9 @@
             <div class="section">
                 <h3>🔓 Déchiffrement</h3>
                 
+                <!-- Message d'alerte local -->
+                <div id="decryptAlert" class="alert" style="margin-bottom: 15px;"></div>
+                
                 <div class="input-group">
                     <label>Texte à déchiffrer</label>
                     <textarea id="textToDecrypt" placeholder="Entrez le message chiffré..." style="min-height: 120px;"></textarea>
@@ -463,11 +469,9 @@
             Aucune donnée n'est envoyée à un serveur.
             <br><br>
             <strong>📝 Note :</strong> 
-            Le chiffrement (<strong>RSA-OAEP</strong>) sert à protéger la confidentialité : le message est chiffré avec la <strong>clé publique du destinataire</strong> et ne peut être déchiffré
-            qu’avec sa clé privée.  
-            La signature (<strong>RSA-PSS</strong>) sert à prouver l’authenticité : le message est signé avec la <strong>clé privée de l’expéditeur</strong> et peut être vérifié
-            avec sa clé publique.  
-            Les clés utilisées pour le chiffrement et pour la signature sont distinctes et indépendantes.</p> 
+            Le <strong>chiffrement</strong> (RSA-OAEP) utilise la clé publique pour protéger la confidentialité. 
+            La <strong>signature</strong> (RSA-PSS) utilise la clé privée pour prouver l'authenticité. 
+            Les deux paires de clés sont <strong>séparées et indépendantes</strong>.
             <br><br>
             <strong>🔷 Hachage SHA-256 :</strong> Produit une empreinte unique de 256 bits. Même un petit changement dans le texte produit un hash complètement différent.
             <br><br>
@@ -711,34 +715,60 @@
             });
         }
 
-        function decryptMessage() {
-            const privateKey = document.getElementById('encryptPrivateKey').value;
-            const textToDecrypt = document.getElementById('textToDecrypt').value;
+        async function decryptMessage() {
+            const privateKey = document.getElementById('encryptPrivateKey').value.trim();
+            const textToDecrypt = document.getElementById('textToDecrypt').value.trim();
 
             if (!privateKey || !textToDecrypt) {
-                showMessage('⚠️ Entrer une clé privée et un texte chiffré', 'warning');
+                showDecryptMessage('⚠️ Entrer une clé privée et un texte chiffré', 'warning');
                 return;
             }
             
-            window.crypto.subtle.importKey(
-                'pkcs8', 
-                hexToArrayBuffer(privateKey), 
-                { name: 'RSA-OAEP', hash: 'SHA-256' }, 
-                false, 
-                ['decrypt']
-            ).then(key => {
-                return window.crypto.subtle.decrypt(
+            // Réinitialiser l'affichage
+            document.getElementById('decryptedResult').classList.add('hidden');
+            
+            try {
+                const key = await window.crypto.subtle.importKey(
+                    'pkcs8', 
+                    hexToArrayBuffer(privateKey), 
+                    { name: 'RSA-OAEP', hash: 'SHA-256' }, 
+                    false, 
+                    ['decrypt']
+                );
+                
+                const decrypted = await window.crypto.subtle.decrypt(
                     { name: 'RSA-OAEP' }, 
                     key, 
                     hexToArrayBuffer(textToDecrypt)
                 );
-            }).then(decrypted => {
+                
                 document.getElementById('decryptedText').textContent = new TextDecoder().decode(decrypted);
                 document.getElementById('decryptedResult').classList.remove('hidden');
-                showMessage('✅ Message déchiffré !', 'success');
-            }).catch(err => {
-                showMessage('❌ Erreur de déchiffrement : ' + err.message, 'error');
-            });
+                showDecryptMessage('✅ Message déchiffré !', 'success');
+            } catch (err) {
+                document.getElementById('decryptedResult').classList.add('hidden');
+                
+                const errorName = err.name || '';
+                
+                if (errorName === 'OperationError' || errorName === 'DataError') {
+                    showDecryptMessage('❌ Impossible de déchiffrer : le texte chiffré ne correspond pas à cette clé privée.', 'error');
+                } else if (errorName === 'SyntaxError') {
+                    showDecryptMessage('❌ Format hexadécimal invalide dans la clé ou le texte chiffré.', 'error');
+                } else if (errorName === 'InvalidAccessError') {
+                    showDecryptMessage('❌ La clé privée est invalide ou corrompue.', 'error');
+                } else {
+                    showDecryptMessage('❌ Erreur de déchiffrement : ' + (errorName || 'Inconnue'), 'error');
+                }
+            }
+        }
+
+        function showDecryptMessage(text, type) {
+            const alert = document.getElementById('decryptAlert');
+            alert.textContent = text;
+            alert.className = `alert alert-${type} show`;
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 5000);
         }
 
         async function signMessage() {
@@ -891,14 +921,70 @@
 
         function copyToClipboard(elementId) {
             const element = document.getElementById(elementId);
-            navigator.clipboard.writeText(element.value);
-            showMessage('📋 Copié dans le presse-papier !', 'success');
+            const text = element.value || element.textContent;
+            
+            // Essayer avec l'API Clipboard moderne
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showMessage('📋 Copié dans le presse-papier !', 'success');
+                }).catch(() => {
+                    fallbackCopy(element);
+                });
+            } else {
+                fallbackCopy(element);
+            }
+        }
+
+        function fallbackCopy(element) {
+            element.select();
+            element.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                showMessage('📋 Copié dans le presse-papier !', 'success');
+            } catch (err) {
+                showMessage('❌ Impossible de copier automatiquement. Sélectionnez et copiez manuellement (Ctrl+C).', 'error');
+            }
         }
 
         function copyDecrypted() {
-            const text = document.getElementById('decryptedText').textContent;
-            navigator.clipboard.writeText(text);
-            showMessage('📋 Copié dans le presse-papier !', 'success');
+            const textElement = document.getElementById('decryptedText');
+            const text = textElement.textContent;
+            
+            if (!text) {
+                showMessage('⚠️ Aucun texte à copier', 'warning');
+                return;
+            }
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showDecryptMessage('📋 Copié dans le presse-papier !', 'success');
+                }).catch(() => {
+                    // Fallback si l'API Clipboard échoue
+                    fallbackCopyText(text);
+                });
+            } else {
+                fallbackCopyText(text);
+            }
+        }
+        
+        function fallbackCopyText(text) {
+            // Créer un textarea temporaire pour le fallback
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            
+            try {
+                document.execCommand('copy');
+                showDecryptMessage('📋 Copié dans le presse-papier !', 'success');
+            } catch (err) {
+                showDecryptMessage('❌ Impossible de copier. Sélectionnez et copiez manuellement (Ctrl+C).', 'error');
+            }
+            
+            document.body.removeChild(textarea);
         }
     </script>
 </body>
