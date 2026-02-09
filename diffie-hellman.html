@@ -290,7 +290,7 @@
 
                 <div class="input-group">
                     <label>Clé privée d'Alice (a) <span class="info-badge">SECRET</span></label>
-                    <textarea id="alicePrivate" placeholder="Clé privée secrète d'Alice..." readonly style="background-color: #fff5f7;"></textarea>
+                    <textarea id="alicePrivate" placeholder="Clé privée secrète d'Alice..." style="background-color: #fff5f7;"></textarea>
                 </div>
 
                 <div class="input-group">
@@ -328,7 +328,7 @@
 
                 <div class="input-group">
                     <label>Clé privée de Bob (b) <span class="info-badge">SECRET</span></label>
-                    <textarea id="bobPrivate" placeholder="Clé privée secrète de Bob..." readonly style="background-color: #fff5f7;"></textarea>
+                    <textarea id="bobPrivate" placeholder="Clé privée secrète de Bob..." style="background-color: #fff5f7;"></textarea>
                 </div>
 
                 <div class="input-group">
@@ -562,9 +562,25 @@
         // Dériver la clé secrète partagée d'Alice
         function deriveAliceSharedSecret() {
             const bobPublicHex = document.getElementById('bobPublicForAlice').value.trim();
+            const alicePrivateHex = document.getElementById('alicePrivate').value.trim();
             
-            if (!alicePrivateKey) {
-                showMessage('⚠️ Générez d\'abord les clés d\'Alice !', 'warning');
+            // Vérifier la clé privée
+            if (!alicePrivateHex) {
+                showMessage('⚠️ Générez ou entrez une clé privée pour Alice !', 'warning');
+                return;
+            }
+            
+            try {
+                // Réimporter la clé privée depuis le champ (au cas où elle a été modifiée manuellement)
+                alicePrivateKey = hexToBigInt(alicePrivateHex);
+                
+                // Valider la clé privée
+                if (!alicePrivateKey || alicePrivateKey <= 0n) {
+                    showMessage('❌ Erreur : La clé privée d\'Alice est invalide (nulle ou négative)', 'error');
+                    return;
+                }
+            } catch (err) {
+                showMessage('❌ Erreur : Format hexadécimal invalide dans la clé privée d\'Alice', 'error');
                 return;
             }
 
@@ -578,6 +594,11 @@
                 
                 const bobPublicKey = hexToBigInt(bobPublicHex);
                 
+                // Vérifier que la clé publique est valide
+                if (!bobPublicKey || bobPublicKey <= 0n || bobPublicKey >= publicParams.p) {
+                    throw new Error('Clé publique hors limites');
+                }
+                
                 // Calculer la clé partagée : s = B^a mod p
                 const sharedSecret = modPow(bobPublicKey, alicePrivateKey, publicParams.p);
 
@@ -586,16 +607,39 @@
 
                 showMessage('✅ Clé partagée calculée par Alice !', 'success');
             } catch (err) {
-                showMessage('❌ Erreur : Clé publique de Bob invalide', 'error');
+                document.getElementById('aliceSharedResult').classList.add('hidden');
+                if (err.message.includes('hexadecimal') || err.message.includes('invalid')) {
+                    showMessage('❌ Erreur : Format hexadécimal invalide dans la clé publique de Bob', 'error');
+                } else if (err.message.includes('limites')) {
+                    showMessage('❌ Erreur : La clé publique de Bob est invalide (hors limites)', 'error');
+                } else {
+                    showMessage('❌ Erreur : Impossible de calculer la clé partagée. Vérifiez la clé publique de Bob.', 'error');
+                }
             }
         }
 
         // Dériver la clé secrète partagée de Bob
         function deriveBobSharedSecret() {
             const alicePublicHex = document.getElementById('alicePublicForBob').value.trim();
+            const bobPrivateHex = document.getElementById('bobPrivate').value.trim();
             
-            if (!bobPrivateKey) {
-                showMessage('⚠️ Générez d\'abord les clés de Bob !', 'warning');
+            // Vérifier la clé privée
+            if (!bobPrivateHex) {
+                showMessage('⚠️ Générez ou entrez une clé privée pour Bob !', 'warning');
+                return;
+            }
+            
+            try {
+                // Réimporter la clé privée depuis le champ (au cas où elle a été modifiée manuellement)
+                bobPrivateKey = hexToBigInt(bobPrivateHex);
+                
+                // Valider la clé privée
+                if (!bobPrivateKey || bobPrivateKey <= 0n) {
+                    showMessage('❌ Erreur : La clé privée de Bob est invalide (nulle ou négative)', 'error');
+                    return;
+                }
+            } catch (err) {
+                showMessage('❌ Erreur : Format hexadécimal invalide dans la clé privée de Bob', 'error');
                 return;
             }
 
@@ -609,6 +653,11 @@
                 
                 const alicePublicKey = hexToBigInt(alicePublicHex);
                 
+                // Vérifier que la clé publique est valide
+                if (!alicePublicKey || alicePublicKey <= 0n || alicePublicKey >= publicParams.p) {
+                    throw new Error('Clé publique hors limites');
+                }
+                
                 // Calculer la clé partagée : s = A^b mod p
                 const sharedSecret = modPow(alicePublicKey, bobPrivateKey, publicParams.p);
 
@@ -617,7 +666,14 @@
 
                 showMessage('✅ Clé partagée calculée par Bob !', 'success');
             } catch (err) {
-                showMessage('❌ Erreur : Clé publique d\'Alice invalide', 'error');
+                document.getElementById('bobSharedResult').classList.add('hidden');
+                if (err.message.includes('hexadecimal') || err.message.includes('invalid')) {
+                    showMessage('❌ Erreur : Format hexadécimal invalide dans la clé publique d\'Alice', 'error');
+                } else if (err.message.includes('limites')) {
+                    showMessage('❌ Erreur : La clé publique d\'Alice est invalide (hors limites)', 'error');
+                } else {
+                    showMessage('❌ Erreur : Impossible de calculer la clé partagée. Vérifiez la clé publique d\'Alice.', 'error');
+                }
             }
         }
 
